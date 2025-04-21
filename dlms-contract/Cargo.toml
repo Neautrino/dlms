@@ -2,6 +2,10 @@
 members = [
     "programs/*"
 ]
+resolver = "2"
+
+[patch.crates-io]
+anchor-syn = { git = "https://github.com/solana-foundation/anchor.git", rev = "54d5396" }
 
 [profile.release]
 overflow-checks = true
