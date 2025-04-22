@@ -1,18 +1,25 @@
-import * as anchor from '@coral-xyz/anchor';
-import { DLMS_PROGRAM_ID } from './utils';
-import { clusterApiUrl, Connection } from '@solana/web3.js';
-import idl from './contract/idl.json';
-import type { DlmsContract } from './contract/dlms.ts'
+import express from 'express'
+import cors from 'cors'
+import { program } from './utils'
+import { fetchSystemState, fetchUserState, fetchUserStateByAuthority, fetchUserStateByPublicKey } from './constructors'
 
- 
-const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
- 
-export const program = new anchor.Program(idl as unknown as DlmsContract, {
-  connection,
-});
+const app = express()
 
-const programId = DLMS_PROGRAM_ID;
+app.use(cors())
+app.use(express.json())
 
-console.log("connection", connection);
-console.log("programId", programId.toBase58());
-console.log("program", program.programId.toBase58());
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' })
+})
+
+app.get('/system-state', fetchSystemState);
+
+app.get('/user-state', fetchUserState);
+
+app.get('/user-by-address/:userAddress', fetchUserStateByPublicKey);
+
+app.get('/user-by-authority/:authority', fetchUserStateByAuthority);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000')
+})
