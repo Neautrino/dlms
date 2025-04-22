@@ -1,70 +1,29 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.program = void 0;
-const anchor = __importStar(require("@coral-xyz/anchor"));
-const web3_js_1 = require("@solana/web3.js");
-const idl_json_1 = __importDefault(require("./contract/idl.json"));
-const utils_1 = require("./utils");
-const connection = new web3_js_1.Connection((0, web3_js_1.clusterApiUrl)("devnet"), "confirmed");
-exports.program = new anchor.Program(idl_json_1.default, {
-    connection,
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const constructors_1 = require("./constructors");
+const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
-const programId = utils_1.DLMS_PROGRAM_ID;
-console.log("connection", connection);
-console.log("programId", programId);
-const getUsers = () => __awaiter(void 0, void 0, void 0, function* () {
-    const users = yield exports.program.account.userAccount.all();
-    console.log("users", users);
-});
-getUsers()
-    .then(() => {
-    console.log("Users fetched successfully");
-})
-    .catch((error) => {
-    console.error("Error fetching users:", error);
+app.get('/system-state', constructors_1.fetchSystemState);
+app.get('/user-state', constructors_1.fetchUserState);
+app.get('/user-by-address/:userAddress', constructors_1.fetchUserStateByPublicKey);
+app.get('/user-by-authority/:authority', constructors_1.fetchUserStateByAuthority);
+app.get('/projects', constructors_1.fetchAllProjects);
+app.get('/project-by-address/:projectAddress', constructors_1.fetchProjectByPublicKey);
+app.get('/project-by-manager/:managerAddress', constructors_1.fetchProjectByManagerAddress);
+app.get('/reviews', constructors_1.getAllReviews);
+app.get('/reviews/:reviewerAddress', constructors_1.getReviewOfUser);
+app.get('/applications', constructors_1.fetchAllApplications);
+app.get('/application-by-labour/:labourAddress', constructors_1.fetchApplicationByLabour);
+app.get('/application-by-project/:projectAddress', constructors_1.fetchApplicationByProject);
+app.listen(3000, () => {
+    console.log('Server is running on port 3000');
 });
