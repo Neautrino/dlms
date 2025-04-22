@@ -19,6 +19,12 @@ import {
     getReviewOfUser,
 } from "./reviewData";
 
+import {
+    fetchAllApplications,
+    fetchApplicationByLabour,
+    fetchApplicationByProject,
+} from "./applicationData";
+
 export { 
     fetchSystemState,
     fetchUserState,
@@ -29,4 +35,7 @@ export {
     fetchProjectByManagerAddress,
     getAllReviews,
     getReviewOfUser,
+    fetchAllApplications,
+    fetchApplicationByLabour,
+    fetchApplicationByProject,
 };
