@@ -1,7 +1,17 @@
 import express from 'express'
 import cors from 'cors'
 import { program } from './utils'
-import { fetchAllProjects, fetchProjectByManagerAddress, fetchProjectByPublicKey, fetchSystemState, fetchUserState, fetchUserStateByAuthority, fetchUserStateByPublicKey } from './constructors'
+import { 
+  fetchAllProjects, 
+  fetchProjectByManagerAddress, 
+  fetchProjectByPublicKey, 
+  fetchSystemState, 
+  fetchUserState, 
+  fetchUserStateByAuthority, 
+  fetchUserStateByPublicKey, 
+  getAllReviews, 
+  getReviewOfUser 
+} from './constructors'
 
 const app = express()
 
@@ -25,6 +35,10 @@ app.get('/projects', fetchAllProjects);
 app.get('/project-by-address/:projectAddress', fetchProjectByPublicKey);
 
 app.get('/project-by-manager/:managerAddress', fetchProjectByManagerAddress);
+
+app.get('/reviews', getAllReviews );
+
+app.get('/reviews/:reviewerAddress', getReviewOfUser );
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000')

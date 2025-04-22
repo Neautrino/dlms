@@ -1,18 +1,18 @@
 import { 
     fetchSystemState,
-} from "./fetchSystemData";
+} from "./systemData";
 
 import {
     fetchUserState,
     fetchUserStateByPublicKey,
     fetchUserStateByAuthority,
-} from "./fetchUserData";
+} from "./userData";
 
 import {
     fetchAllProjects,
     fetchProjectByPublicKey,
     fetchProjectByManagerAddress,
-} from "./fetchProjectDetails";
+} from "./projectData";
 
 import {
     getAllReviews,
