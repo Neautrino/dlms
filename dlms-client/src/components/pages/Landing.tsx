@@ -8,9 +8,6 @@ import {
   Shield,
   Wallet,
   Award,
-  Users,
-  Globe,
-  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -105,13 +102,13 @@ export default function LandingPage() {
 
               <div className="flex flex-wrap gap-4">
                 <Button size="lg" className="rounded-full group" asChild>
-                  <Link href="/login">
+                  <Link href="/home">
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="rounded-full" asChild>
-                  <Link href="/about">Learn More</Link>
+                  <Link href="#Qfeatures" >Learn More</Link>
                 </Button>
               </div>
 
@@ -150,7 +147,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-secondary/30">
+      <section className="py-24 bg-secondary/30" id="features">
         <div className="container mx-auto px-4">
           <motion.div
             className="text-center max-w-2xl mx-auto mb-16"
@@ -250,7 +247,7 @@ export default function LandingPage() {
               className="rounded-full"
               asChild
             >
-              <Link href="/login">
+              <Link href="/home">
                 Get Started Now
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

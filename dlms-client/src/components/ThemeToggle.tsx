@@ -82,7 +82,7 @@ export function ThemeToggle() {
         variant="ghost"
         size="icon"
         onClick={toggleExpand}
-        className="relative z-10 bg-card hover:bg-card/80 rounded-full"
+        className="relative z-10 bg-gray-900 text-white  rounded-full"
         aria-label="Toggle theme selector"
       >
         {currentIcon}
