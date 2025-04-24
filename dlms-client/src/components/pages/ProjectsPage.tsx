@@ -21,7 +21,7 @@ export default function ProjectsListingPage() {
   const [locationFilter, setLocationFilter] = useState<'all' | 'remote' | 'onsite'>('all');
   const [rateSortOrder, setRateSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [durationSortOrder, setDurationSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   
   // Load mock data
   useEffect(() => {
@@ -319,16 +319,7 @@ export default function ProjectsListingPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              <Grid size={20} />
-            </button>
+            
             <button
               onClick={() => setViewMode('list')}
               className={`p-2 rounded-md transition-colors ${
@@ -338,6 +329,16 @@ export default function ProjectsListingPage() {
               }`}
             >
               <List size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <Grid size={20} />
             </button>
           </div>
         </div>

@@ -1,9 +1,9 @@
-import HomePage from '@/components/pages/HomePage'
+import UserDashboard from '@/components/pages/UserDashboard'
 import React from 'react'
 
 function page() {
   return (
-    <HomePage />
+    <UserDashboard />
   )
 }
 

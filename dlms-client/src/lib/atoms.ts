@@ -7,7 +7,7 @@ export const projectAtom = atom<Project | null>(null);
 // User atoms
 export type ViewMode = 'grid' | 'list' | 'table';
 
-export const viewModeAtom = atom<ViewMode>('grid');
+export const viewModeAtom = atom<ViewMode>('table');
 export const selectedUserAtom = atom<FullUserData | null>(null);
 export const userFilterAtom = atom({
   role: 'all' as 'all' | 'labor' | 'manager',

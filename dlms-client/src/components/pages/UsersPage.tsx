@@ -182,15 +182,15 @@ export default function UsersPage() {
             Showing {filteredUsers.length} of {users.length} users
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
+          <button
+              onClick={() => setViewMode('table')}
               className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
+                viewMode === 'table'
                   ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
               }`}
             >
-              <Grid size={20} />
+              <Table size={20} />
             </button>
             <button
               onClick={() => setViewMode('list')}
@@ -203,14 +203,14 @@ export default function UsersPage() {
               <List size={20} />
             </button>
             <button
-              onClick={() => setViewMode('table')}
+              onClick={() => setViewMode('grid')}
               className={`p-2 rounded-md transition-colors ${
-                viewMode === 'table'
+                viewMode === 'grid'
                   ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
               }`}
             >
-              <Table size={20} />
+              <Grid size={20} />
             </button>
           </div>
         </div>
