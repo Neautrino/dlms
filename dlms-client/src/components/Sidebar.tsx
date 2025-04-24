@@ -7,12 +7,21 @@ import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 
 interface NavigationItem {
   name: string;
   icon: React.ReactNode;
   path: string;
 }
+
+const WalletMultiButton = dynamic(
+  () =>
+    import("@solana/wallet-adapter-react-ui").then(
+      (mod) => mod.WalletMultiButton
+    ),
+  { ssr: false }
+);
 
 const navigationItems: NavigationItem[] = [
   { name: 'Home', icon: <Home size={20} strokeWidth={2} />, path: '/home' },
@@ -38,7 +47,7 @@ export default function Sidebar() {
           <span className="font-bold text-2xl text-purple-700 dark:text-purple-400">DLabor</span>
         </Link>
 
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <div 
             className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 cursor-pointer mb-2 shadow-sm hover:shadow-md transition-shadow"
             onClick={() => setIsProfileExpanded(!isProfileExpanded)}
@@ -73,7 +82,9 @@ export default function Sidebar() {
               </Link>
             </motion.div>
           )}
-        </div>
+        </div> */}
+
+        <WalletMultiButton />
 
         <nav className="space-y-1">
           {navigationItems.map((item, index) => {
@@ -119,16 +130,7 @@ export default function Sidebar() {
           </motion.div>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <button className="p-2 rounded-full bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
-                <Bell className="w-5 h-5" />
-              </button>
-            </motion.div>
-          </div>
-          <ThemeToggle />
-        </div>
+        
       </div>
     </motion.div>
   );
