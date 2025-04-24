@@ -1,224 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, UserCheck, UserX, Star, ChevronDown, Briefcase, CalendarClock, Tag, MessageSquare, ExternalLink } from 'lucide-react';
+import { Search, Filter, UserCheck, UserX, Star, ChevronDown, Briefcase, CalendarClock, Tag, MessageSquare, ExternalLink, Grid, List, Table } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-
-// Define types based on your Solana account structure
-enum UserRole {
-  Manager = 0,
-  Labor = 1,
-}
-
-interface UserAccount {
-  authority: string;
-  name: string;
-  metadata_uri: string;
-  active: boolean;
-  verified: boolean;
-  rating: number;
-  rating_count: number;
-  timestamp: number;
-  index: number;
-  role: UserRole;
-  spam: boolean;
-}
-
-interface UserMetadata {
-  name: string;
-  age: number;
-  bio: string;
-  profileImage?: string;
-  // Labor specific fields
-  experience?: string[];
-  skillsets?: string[];
-  availability?: string;
-  hourlyRate?: number;
-  languages?: string[];
-  certifications?: string[];
-  preferredLocation?: string;
-  // Manager specific fields
-  company?: string;
-  companyDetails?: {
-    industry: string;
-    size: string;
-    founded: number;
-    location: string;
-    website?: string;
-  };
-  projectHistory?: {
-    title: string;
-    description: string;
-    duration: string;
-  }[];
-  hiringFrequency?: string;
-}
-
-interface FullUserData {
-  account: UserAccount;
-  metadata: UserMetadata;
-}
-
-// Mock data for demonstration
-const MOCK_USERS: FullUserData[] = [
-  {
-    account: {
-      authority: "BvzKvn5RwARA3nkYf1FB6xfRxd8NUBc3HjvVqXAjgZ2M",
-      name: "Alex Johnson",
-      metadata_uri: "ipfs://Qmabcd123456",
-      active: true,
-      verified: true,
-      rating: 48,
-      rating_count: 12,
-      timestamp: Date.now() - 3600000 * 24 * 30,
-      index: 1,
-      role: UserRole.Labor,
-      spam: false
-    },
-    metadata: {
-      name: "Alex Johnson",
-      age: 28,
-      bio: "Experienced electrician with a focus on residential and commercial installations.",
-      profileImage: "/api/placeholder/80/80",
-      experience: ["5 years at City Electric", "3 years independent contracting"],
-      skillsets: ["Electrical installation", "Circuit diagnosis", "Smart home setup", "Solar panel installation"],
-      availability: "Weekdays 8am-5pm",
-      hourlyRate: 45,
-      languages: ["English", "Spanish"],
-      certifications: ["Licensed Electrician", "Solar Installation Certificate"],
-      preferredLocation: "Within 25 miles of downtown"
-    }
-  },
-  {
-    account: {
-      authority: "Fj2KmxRwCvE3nkXOeQcYgjvn8FGd9WzBc1HbvFqZDngH",
-      name: "Sarah Miller",
-      metadata_uri: "ipfs://Qmefgh789012",
-      active: true,
-      verified: true,
-      rating: 50,
-      rating_count: 24,
-      timestamp: Date.now() - 3600000 * 24 * 45,
-      index: 2,
-      role: UserRole.Manager,
-      spam: false
-    },
-    metadata: {
-      name: "Sarah Miller",
-      age: 35,
-      bio: "Project manager at BuildRight Construction, focusing on sustainable building practices.",
-      profileImage: "/api/placeholder/80/80",
-      company: "BuildRight Construction",
-      companyDetails: {
-        industry: "Construction",
-        size: "50-100 employees",
-        founded: 2012,
-        location: "Portland, OR",
-        website: "buildright.example.com"
-      },
-      hiringFrequency: "Weekly"
-    }
-  },
-  {
-    account: {
-      authority: "Hjk8LmnPqAs3ZjvD2dGhT7rFkY9Bc1HwbvPqXKlm5N",
-      name: "Miguel Santos",
-      metadata_uri: "ipfs://Qmijkl345678",
-      active: true,
-      verified: false,
-      rating: 42,
-      rating_count: 8,
-      timestamp: Date.now() - 3600000 * 24 * 10,
-      index: 3,
-      role: UserRole.Labor,
-      spam: false
-    },
-    metadata: {
-      name: "Miguel Santos",
-      age: 31,
-      bio: "Skilled carpenter with expertise in custom cabinetry and furniture.",
-      profileImage: "/api/placeholder/80/80",
-      experience: ["7 years in fine woodworking", "3 years as lead carpenter"],
-      skillsets: ["Cabinetry", "Furniture making", "Finishing", "Restoration"],
-      availability: "Flexible schedule",
-      hourlyRate: 55,
-      languages: ["English", "Portuguese"],
-      certifications: ["Master Carpenter"],
-      preferredLocation: "Citywide"
-    }
-  },
-  {
-    account: {
-      authority: "Pqr5TuvWxYz7AbC8DeFgH1IjKlM9Bc1HbvPqXNopq2R",
-      name: "Emily Chen",
-      metadata_uri: "ipfs://Qmnopq901234",
-      active: true,
-      verified: true,
-      rating: 49,
-      rating_count: 31,
-      timestamp: Date.now() - 3600000 * 24 * 60,
-      index: 4,
-      role: UserRole.Manager,
-      spam: false
-    },
-    metadata: {
-      name: "Emily Chen",
-      age: 42,
-      bio: "Director of operations at GreenScape, specializing in sustainable landscaping projects.",
-      profileImage: "/api/placeholder/80/80",
-      company: "GreenScape Design",
-      companyDetails: {
-        industry: "Landscaping & Architecture",
-        size: "20-50 employees",
-        founded: 2015,
-        location: "Seattle, WA",
-        website: "greenscape.example.com"
-      },
-      hiringFrequency: "Monthly"
-    }
-  },
-  {
-    account: {
-      authority: "Stu6VwxYzAb1CdEfGh2IjKl3MnOp7Bc1HbvQrStuv4W",
-      name: "David Wilson",
-      metadata_uri: "ipfs://Qmrstu567890",
-      active: false,
-      verified: true,
-      rating: 47,
-      rating_count: 19,
-      timestamp: Date.now() - 3600000 * 24 * 90,
-      index: 5,
-      role: UserRole.Labor,
-      spam: false
-    },
-    metadata: {
-      name: "David Wilson",
-      age: 39,
-      bio: "HVAC technician with 15+ years of experience in residential and commercial systems.",
-      profileImage: "/api/placeholder/80/80",
-      experience: ["10 years at Cool Air Systems", "5 years at Home Comfort HVAC"],
-      skillsets: ["HVAC installation", "System maintenance", "Energy efficiency consulting", "Refrigeration"],
-      availability: "Currently unavailable",
-      hourlyRate: 60,
-      languages: ["English"],
-      certifications: ["HVAC Certified Technician", "EPA 608 Certification"],
-      preferredLocation: "Metro area only"
-    }
-  }
-];
+import { MOCK_USERS } from '@/lib/DummyData';
+import { useAtom } from 'jotai';
+import { viewModeAtom, selectedUserAtom, userFilterAtom } from '@/lib/atoms';
+import { FullUserData, UserRole } from '@/types/user';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<FullUserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<FullUserData[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<FullUserData | null>(null);
-  const [roleFilter, setRoleFilter] = useState<'all' | 'labor' | 'manager'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>('all');
   const [showFilters, setShowFilters] = useState(false);
   
-  // Load mock data (in a real app, this would fetch from your backend)
+  // Atoms
+  const [viewMode, setViewMode] = useAtom(viewModeAtom);
+  const [selectedUser, setSelectedUser] = useAtom(selectedUserAtom);
+  const [filters, setFilters] = useAtom(userFilterAtom);
+
+  // Load mock data
   useEffect(() => {
     setUsers(MOCK_USERS);
     setFilteredUsers(MOCK_USERS);
@@ -229,8 +30,8 @@ export default function UsersPage() {
     let result = [...users];
     
     // Apply search
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
+    if (filters.search) {
+      const lowerSearch = filters.search.toLowerCase();
       result = result.filter(user => 
         user.account.name.toLowerCase().includes(lowerSearch) ||
         user.metadata.bio.toLowerCase().includes(lowerSearch) ||
@@ -246,28 +47,28 @@ export default function UsersPage() {
     }
     
     // Apply role filter
-    if (roleFilter !== 'all') {
+    if (filters.role !== 'all') {
       result = result.filter(user => 
-        roleFilter === 'labor' ? user.account.role === UserRole.Labor : user.account.role === UserRole.Manager
+        filters.role === 'labor' ? user.account.role === UserRole.Labor : user.account.role === UserRole.Manager
       );
     }
     
     // Apply status filter
-    if (statusFilter !== 'all') {
+    if (filters.status !== 'all') {
       result = result.filter(user => 
-        statusFilter === 'active' ? user.account.active : !user.account.active
+        filters.status === 'active' ? user.account.active : !user.account.active
       );
     }
     
     // Apply verified filter
-    if (verifiedFilter !== 'all') {
+    if (filters.verified !== 'all') {
       result = result.filter(user => 
-        verifiedFilter === 'verified' ? user.account.verified : !user.account.verified
+        filters.verified === 'verified' ? user.account.verified : !user.account.verified
       );
     }
     
     setFilteredUsers(result);
-  }, [users, searchTerm, roleFilter, statusFilter, verifiedFilter]);
+  }, [users, filters]);
 
   // Format timestamp to relative time
   const formatRelativeTime = (timestamp: number) => {
@@ -302,8 +103,8 @@ export default function UsersPage() {
               <input
                 type="text"
                 placeholder="Search by name, skills, company..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 className="pl-10 pr-4 py-2.5 w-full border-0 rounded-lg bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -335,8 +136,8 @@ export default function UsersPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
                       <select
-                        value={roleFilter}
-                        onChange={(e) => setRoleFilter(e.target.value as any)}
+                        value={filters.role}
+                        onChange={(e) => setFilters({ ...filters, role: e.target.value as any })}
                         className="w-full p-2 rounded-md bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         <option value="all">All Roles</option>
@@ -347,8 +148,8 @@ export default function UsersPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                       <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as any)}
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
                         className="w-full p-2 rounded-md bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         <option value="all">All Statuses</option>
@@ -359,8 +160,8 @@ export default function UsersPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Verification</label>
                       <select
-                        value={verifiedFilter}
-                        onChange={(e) => setVerifiedFilter(e.target.value as any)}
+                        value={filters.verified}
+                        onChange={(e) => setFilters({ ...filters, verified: e.target.value as any })}
                         className="w-full p-2 rounded-md bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         <option value="all">All Users</option>
@@ -374,97 +175,284 @@ export default function UsersPage() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* View mode toggle */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Showing {filteredUsers.length} of {users.length} users
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <Grid size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <List size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <Table size={20} />
+            </button>
+          </div>
+        </div>
         
         {/* Users listing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUsers.map((user) => (
-            <motion.div
-              key={user.account.authority}
-              whileHover={{ y: -4 }}
-              onClick={() => setSelectedUser(user)}
-              className="p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 cursor-pointer hover:ring-purple-500 dark:hover:ring-purple-400 transition-shadow"
-            >
-              <div className="flex items-start gap-3">
-                <div className="relative">
-                  <Image 
-                    src={user.metadata.profileImage || "/api/placeholder/80/80"} 
-                    width={48} 
-                    height={48} 
-                    alt={user.account.name} 
-                    className="rounded-full object-cover"
-                  />
-                  {user.account.verified && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
-                      <UserCheck size={14} />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-medium">{user.account.name}</h3>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star size={16} fill="currentColor" />
-                      <span className="text-sm">{formatRating(user.account.rating)}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">({user.account.rating_count})</span>
-                    </div>
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredUsers.map((user) => (
+              <motion.div
+                key={user.account.authority}
+                whileHover={{ y: -4 }}
+                onClick={() => setSelectedUser(user)}
+                className="p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 cursor-pointer hover:ring-purple-500 dark:hover:ring-purple-400 transition-shadow"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="relative">
+                    <Image 
+                      src={user.metadata.profileImage || "/api/placeholder/80/80"} 
+                      width={48} 
+                      height={48} 
+                      alt={user.account.name} 
+                      className="rounded-full object-cover"
+                    />
+                    {user.account.verified && (
+                      <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
+                        <UserCheck size={14} />
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user.account.role === UserRole.Labor 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
-                        : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
-                    }`}>
-                      {user.account.role === UserRole.Labor ? 'Worker' : 'Manager'}
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      user.account.active 
-                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                    }`}>
-                      {user.account.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
-                    {user.metadata.bio}
-                  </p>
-                  
-                  {user.account.role === UserRole.Labor ? (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {user.metadata.skillsets?.slice(0, 3).map((skill, idx) => (
-                        <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                          {skill}
-                        </span>
-                      ))}
-                      {(user.metadata.skillsets?.length || 0) > 3 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                          +{(user.metadata.skillsets?.length || 0) - 3} more
-                        </span>
-                      )}
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium">{user.account.name}</h3>
+                      <div className="flex items-center gap-1 text-amber-500">
+                        <Star size={16} fill="currentColor" />
+                        <span className="text-sm">{formatRating(user.account.rating)}</span>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      <span className="font-medium">{user.metadata.company}</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-xs"> • {user.metadata.companyDetails?.industry}</span>
+                    
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.account.role === UserRole.Labor 
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
+                          : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                      }`}>
+                        {user.account.role === UserRole.Labor ? 'Worker' : 'Manager'}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.account.active 
+                          ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                      }`}>
+                        {user.account.active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                  )}
-                  
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Joined {formatRelativeTime(user.account.timestamp)}
+                    
+                    <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
+                      {user.metadata.bio}
+                    </p>
+                    
+                    {user.account.role === UserRole.Labor ? (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {user.metadata.skillsets?.slice(0, 3).map((skill, idx) => (
+                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        <span className="font-medium">{user.metadata.company}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-          
-          {filteredUsers.length === 0 && (
-            <div className="col-span-full p-8 text-center text-gray-500 dark:text-gray-400">
-              No users found matching your criteria. Try adjusting your search or filters.
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'list' && (
+          <div className="space-y-4">
+            {filteredUsers.map((user) => (
+              <motion.div
+                key={user.account.authority}
+                whileHover={{ x: 4 }}
+                onClick={() => setSelectedUser(user)}
+                className="p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 cursor-pointer hover:ring-purple-500 dark:hover:ring-purple-400 transition-shadow"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Image 
+                      src={user.metadata.profileImage || "/api/placeholder/80/80"} 
+                      width={48} 
+                      height={48} 
+                      alt={user.account.name} 
+                      className="rounded-full object-cover"
+                    />
+                    {user.account.verified && (
+                      <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
+                        <UserCheck size={14} />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="font-medium">{user.account.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            user.account.role === UserRole.Labor 
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
+                              : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                          }`}>
+                            {user.account.role === UserRole.Labor ? 'Worker' : 'Manager'}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            user.account.active 
+                              ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                          }`}>
+                            {user.account.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 text-amber-500">
+                          <Star size={16} fill="currentColor" />
+                          <span className="text-sm">{formatRating(user.account.rating)}</span>
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Joined {formatRelativeTime(user.account.timestamp)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'table' && (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                  <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">User</th>
+                  <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">Role</th>
+                  <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
+                  <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">Rating</th>
+                  <th className="pb-3 font-medium text-gray-500 dark:text-gray-400">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr 
+                    key={user.account.authority}
+                    onClick={() => setSelectedUser(user)}
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                  >
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Image 
+                            src={user.metadata.profileImage || "/api/placeholder/80/80"} 
+                            width={32} 
+                            height={32} 
+                            alt={user.account.name} 
+                            className="rounded-full object-cover"
+                          />
+                          {user.account.verified && (
+                            <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5">
+                              <UserCheck size={12} />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium">{user.account.name}</span>
+                          {user.account.role === UserRole.Labor && user.metadata.experience && (
+                            <div className="text-sm text-gray-600 dark:text-gray-300">
+                              {user.metadata.experience[0]}
+                            </div>
+                          )}
+                          {user.account.role === UserRole.Labor && user.metadata.skillsets && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {user.metadata.skillsets.slice(0, 3).map((skill, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.account.role === UserRole.Labor 
+                          ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
+                          : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                      }`}>
+                        {user.account.role === UserRole.Labor ? 'Worker' : 'Manager'}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.account.active 
+                          ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                      }`}>
+                        {user.account.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      <div className="flex items-center gap-1 text-amber-500">
+                        <Star size={16} fill="currentColor" />
+                        <span className="text-sm">{formatRating(user.account.rating)}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {formatRelativeTime(user.account.timestamp)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        
+        {filteredUsers.length === 0 && (
+          <div className="p-12 text-center">
+            <div className="mb-4">
+              <Search size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
             </div>
-          )}
-        </div>
+            <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">No users found</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Try adjusting your search or filter criteria
+            </p>
+          </div>
+        )}
       </div>
       
       {/* User detail modal */}
