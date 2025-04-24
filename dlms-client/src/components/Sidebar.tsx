@@ -14,7 +14,7 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { name: 'Home', icon: <Home size={20} strokeWidth={2} />, path: '/home' },
   { name: 'Projects', icon: <Briefcase size={20} strokeWidth={2} />, path: '/projects' },
-  { name: 'Workers', icon: <Users size={20} strokeWidth={2} />, path: '/workers' },
+  { name: 'Users', icon: <Users size={20} strokeWidth={2} />, path: '/users' },
   { name: 'Profile', icon: <User size={20} strokeWidth={2} />, path: '/profile' },
   { name: 'Analytics', icon: <BarChart size={20} strokeWidth={2} />, path: '/analytics' },
   { name: 'Settings', icon: <Settings size={20} strokeWidth={2} />, path: '/settings' },

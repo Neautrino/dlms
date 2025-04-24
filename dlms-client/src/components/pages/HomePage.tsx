@@ -25,8 +25,7 @@ const item = {
 };
 
 export default function HomePage() {
-  const [project, setProject] = useAtom(projectAtom);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useAtom(projectAtom);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +35,6 @@ export default function HomePage() {
         if (!response.ok) throw new Error('Failed to fetch projects');
         const data = await response.json();
         setProjects(data);
-        if (data.length > 0) {
-          setProject(data[0]);
-        }
       } catch (error) {
         console.error('Error fetching projects:', error);
       } finally {
@@ -47,7 +43,7 @@ export default function HomePage() {
     };
 
     fetchProjects();
-  }, [setProject]);
+  }, [setProjects]);
 
   if (loading) {
     return <div className="p-8">Loading projects...</div>;
@@ -66,7 +62,7 @@ export default function HomePage() {
         animate="show"
         className="grid gap-6"
       >
-        {projects.map((project) => (
+        {projects && projects.map((project) => (
           <motion.div
             key={project.publicKey}
             variants={item}
