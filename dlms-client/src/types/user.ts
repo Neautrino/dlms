@@ -56,43 +56,19 @@ export interface ManagerMetadata {
   postalCode?: string;
   country?: string;
   verificationDocuments?: string;
-  company?: string;
   companyDetails?: {
+    company?: string;
     industry?: string;
-    size?: string;
     founded?: number;
     location?: string;
-    website?: string;
+    industryFocus?: string[];
   };
-  hiringFrequency?: string;
   managementExperience?: number;
-  teamSize?: number;
-  industryFocus?: string[];
-  projectBudgetRange?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  previousHires?: {
-    role: string;
-    duration: string;
-    projectOutcome?: string;
-  }[];
   relevantDocuments?: string;
 }
 
 // Type for user metadata that can be either Labor or Manager
 export type UserMetadata = LaborMetadata | ManagerMetadata;
-
-// Helper function to determine if metadata is for Labor
-export function isLaborMetadata(metadata: UserMetadata): metadata is LaborMetadata {
-  return 'hourlyRate' in metadata || 'skillsets' in metadata || 'experience' in metadata;
-}
-
-// Helper function to determine if metadata is for Manager
-export function isManagerMetadata(metadata: UserMetadata): metadata is ManagerMetadata {
-  return 'company' in metadata || 'hiringFrequency' in metadata || 'teamSize' in metadata;
-}
 
 export interface FullUserData {
   account: UserAccount;
