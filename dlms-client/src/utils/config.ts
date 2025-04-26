@@ -48,7 +48,7 @@ export async function uploadFileToPinata(file: File) {
 /**
  * Uploads metadata as JSON to Pinata and returns the IPFS URL
  */
-export async function uploadMetadataToPinata(metadata: UserMetadata) {
+export async function uploadMetadataToPinata(metadata: any) {
   try {
     const groups = await pinata.groups.public
       .list()

@@ -22,24 +22,29 @@ export interface Project {
 }
 
 export interface ProjectMetadata {
+    title: string;
     description: string;
     location: string;
-    remote: boolean;
     requiredSkills: string[];
-    preferredExperience: string;
     projectImage?: string;
-    category: string;
-    documents: {
+    company: string;
+    companyDetails: {
         name: string;
         description: string;
-        uri: string;
-        fileType: string;
-    }[];
+        industryFocus: string[];
+        verifiedDocument: string;
+    }
+    category: string;
     managerName: string;
+    managerWalletAddress: string;
     managerRating: number;
     startDate?: string;
-    company?: string;
-    applicationDeadline?: string;
+    required_labourer_count: number;
+    application_deadline?: string;
+    relevant_documents: {
+        description: string;
+        uri: string;
+    };
 }
 
 export interface FullProjectData {
