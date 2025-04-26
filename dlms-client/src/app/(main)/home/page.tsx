@@ -1,10 +1,12 @@
+'use client'
+
 import UserDashboard from '@/components/pages/UserDashboard'
-import React from 'react'
+import LoginPage from '@/components/pages/LoginPage'
+import { useAtom } from 'jotai'
+import { isConnectedAtom } from '@/lib/atoms'
 
-function page() {
-  return (
-    <UserDashboard />
-  )
+export default function Page() {
+  const [isConnected] = useAtom(isConnectedAtom)
+
+  return isConnected ? <UserDashboard /> : <LoginPage />
 }
-
-export default page

@@ -42,8 +42,20 @@ const anchor = __importStar(require("@coral-xyz/anchor"));
 const web3_js_1 = require("@solana/web3.js");
 const idl_json_1 = __importDefault(require("./contract/idl.json"));
 exports.idl = idl_json_1.default;
-exports.DLMS_PROGRAM_ID = new web3_js_1.PublicKey(idl_json_1.default.address);
-exports.connection = new web3_js_1.Connection((0, web3_js_1.clusterApiUrl)("devnet"), "confirmed");
+exports.DLMS_PROGRAM_ID = new web3_js_1.PublicKey("Fm9ozCZNtE94x64Rh5pZv88vVZ8B9rFjjiEArmthiVA");
+// Create a connection to the Solana cluster
+exports.connection = new web3_js_1.Connection("https://api.devnet.solana.com", "confirmed");
+// const wallet = new anchor.Wallet(Keypair.generate());
+// export const provider = new anchor.AnchorProvider(
+//   connection,
+//   wallet,
+//   { commitment: "confirmed" }
+// );
+// anchor.setProvider(provider);
+// export const program = new anchor.Program(
+//   idl as DlmsContract,
+//   provider
+// ) as anchor.Program<DlmsContract>;
 exports.program = new anchor.Program(idl_json_1.default, {
     connection: exports.connection,
 });

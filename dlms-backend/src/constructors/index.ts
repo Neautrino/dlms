@@ -25,6 +25,14 @@ import {
     fetchApplicationByProject,
 } from "./applicationData";
 
+import {
+    registerUser,
+} from "./registerUser";
+
+import {
+    initializeSystem,
+} from "./initializeSystem";
+
 export { 
     fetchSystemState,
     fetchUserState,
@@ -38,4 +46,6 @@ export {
     fetchAllApplications,
     fetchApplicationByLabour,
     fetchApplicationByProject,
+    registerUser,
+    initializeSystem,
 };

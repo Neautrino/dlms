@@ -13,7 +13,9 @@ import {
   fetchUserStateByAuthority, 
   fetchUserStateByPublicKey, 
   getAllReviews, 
-  getReviewOfUser 
+  getReviewOfUser, 
+  registerUser,
+  initializeSystem,
 } from './constructors'
 
 const app = express()
@@ -49,6 +51,10 @@ app.get('/application-by-labour/:labourAddress', fetchApplicationByLabour);
 
 app.get('/application-by-project/:projectAddress', fetchApplicationByProject);
 
-app.listen(3000, () => {
+app.post('/register-user', registerUser);
+
+app.post('/initialize-system', initializeSystem);
+
+app.listen(8080, () => {
   console.log('Server is running on port 3000')
 })

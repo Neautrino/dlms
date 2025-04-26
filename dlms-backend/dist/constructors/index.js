@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchApplicationByProject = exports.fetchApplicationByLabour = exports.fetchAllApplications = exports.getReviewOfUser = exports.getAllReviews = exports.fetchProjectByManagerAddress = exports.fetchProjectByPublicKey = exports.fetchAllProjects = exports.fetchUserStateByAuthority = exports.fetchUserStateByPublicKey = exports.fetchUserState = exports.fetchSystemState = void 0;
+exports.registerUser = exports.fetchApplicationByProject = exports.fetchApplicationByLabour = exports.fetchAllApplications = exports.getReviewOfUser = exports.getAllReviews = exports.fetchProjectByManagerAddress = exports.fetchProjectByPublicKey = exports.fetchAllProjects = exports.fetchUserStateByAuthority = exports.fetchUserStateByPublicKey = exports.fetchUserState = exports.fetchSystemState = void 0;
 const systemData_1 = require("./systemData");
 Object.defineProperty(exports, "fetchSystemState", { enumerable: true, get: function () { return systemData_1.fetchSystemState; } });
 const userData_1 = require("./userData");
@@ -18,3 +18,5 @@ const applicationData_1 = require("./applicationData");
 Object.defineProperty(exports, "fetchAllApplications", { enumerable: true, get: function () { return applicationData_1.fetchAllApplications; } });
 Object.defineProperty(exports, "fetchApplicationByLabour", { enumerable: true, get: function () { return applicationData_1.fetchApplicationByLabour; } });
 Object.defineProperty(exports, "fetchApplicationByProject", { enumerable: true, get: function () { return applicationData_1.fetchApplicationByProject; } });
+const registerUser_1 = require("./registerUser");
+Object.defineProperty(exports, "registerUser", { enumerable: true, get: function () { return registerUser_1.registerUser; } });

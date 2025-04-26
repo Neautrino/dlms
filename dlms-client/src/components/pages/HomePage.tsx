@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, DollarSign, Users } from 'lucide-react';
 import { useAtom } from 'jotai';
-import { projectAtom } from '@/lib/atoms';
+import { projectAtom, authAtom } from '@/lib/atoms';
 import { useEffect, useState } from 'react';
 import type { Project } from '@/types/contract';
+import LoginPage from './LoginPage';
 
 const container = {
   hidden: { opacity: 0 },
@@ -27,6 +28,7 @@ const item = {
 export default function HomePage() {
   const [projects, setProjects] = useAtom(projectAtom);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated] = useAtom(authAtom);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -42,11 +44,19 @@ export default function HomePage() {
       }
     };
 
-    fetchProjects();
-  }, [setProjects]);
+    if (isAuthenticated) {
+      fetchProjects();
+    } else {
+      setLoading(false);
+    }
+  }, [setProjects, isAuthenticated]);
 
   if (loading) {
-    return <div className="p-8">Loading projects...</div>;
+    return <div className="p-8">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
   }
 
   return (
@@ -97,7 +107,7 @@ export default function HomePage() {
               </Badge>
               <Badge variant="secondary">
                 Index: {project.index}
-              </Badge>
+                </Badge>
             </div>
           </motion.div>
         ))}

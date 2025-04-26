@@ -1,17 +1,27 @@
 import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 import type { Project } from '@/types/contract';
 import type { FullUserData } from '@/types/user';
 
-export const projectAtom = atom<Project | null>(null);
+// Authentication atom
+export const authAtom = atom<boolean>(false);
+
+// Project atom
+export const projectAtom = atom<Project[]>([]);
 
 // User atoms
 export type ViewMode = 'grid' | 'list' | 'table';
 
-export const viewModeAtom = atom<ViewMode>('table');
-export const selectedUserAtom = atom<FullUserData | null>(null);
+// View mode atom for users and projects pages
+export const viewModeAtom = atom<ViewMode>('list');
+export const selectedUserAtom = atom<string | null>(null);
 export const userFilterAtom = atom({
-  role: 'all' as 'all' | 'labor' | 'manager',
-  status: 'all' as 'all' | 'active' | 'inactive',
-  verified: 'all' as 'all' | 'verified' | 'unverified',
-  search: ''
+  search: '',
+  role: 'all',
+  status: 'all',
+  verified: 'all'
 });
+
+export const isConnectedAtom = atomWithStorage('isConnected', false);
+
+export const userAtom = atom<FullUserData[] | null>(null);

@@ -24,6 +24,7 @@ app.get('/reviews/:reviewerAddress', constructors_1.getReviewOfUser);
 app.get('/applications', constructors_1.fetchAllApplications);
 app.get('/application-by-labour/:labourAddress', constructors_1.fetchApplicationByLabour);
 app.get('/application-by-project/:projectAddress', constructors_1.fetchApplicationByProject);
+app.post('/register-user', constructors_1.registerUser);
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
