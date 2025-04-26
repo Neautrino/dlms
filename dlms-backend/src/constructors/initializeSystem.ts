@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, SystemProgram, SendTransactionError, Transaction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, SendTransactionError, Transaction } from "@solana/web3.js";
 import { program, provider } from "../utils";
 import { Request, Response, RequestHandler } from "express";
 import * as anchor from "@coral-xyz/anchor";

@@ -19,33 +19,43 @@ export interface UserAccount {
   spam: boolean;
 }
 
-// Base metadata fields that both roles share
-export interface BaseUserMetadata {
+// Labor-specific metadata
+export interface LaborMetadata {
   name: string;
   bio: string;
   profileImage?: string;
-  languages?: string[];
-  location?: string;
+  gender?: string;
   dateOfBirth?: Date;
-}
-
-// Labor-specific metadata
-export interface LaborMetadata extends BaseUserMetadata {
+  languages?: string[];
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  verificationDocuments?: string;
   experience?: string[];
   skillsets?: string[];
   certifications?: string[];
-  availability?: string;
-  hourlyRate?: number;
   workHistory?: {
     title: string;
     description: string;
     duration: string;
   }[];
-  relevantDocuments?: string[];
+  relevantDocuments?: string;
 }
 
 // Manager-specific metadata
-export interface ManagerMetadata extends BaseUserMetadata {
+export interface ManagerMetadata {
+  name: string;
+  bio: string;
+  profileImage?: string;
+  gender?: string;
+  dateOfBirth?: Date;
+  languages?: string[];
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  verificationDocuments?: string;
   company?: string;
   companyDetails?: {
     industry?: string;
@@ -68,7 +78,7 @@ export interface ManagerMetadata extends BaseUserMetadata {
     duration: string;
     projectOutcome?: string;
   }[];
-  relevantDocuments?: string[];
+  relevantDocuments?: string;
 }
 
 // Type for user metadata that can be either Labor or Manager

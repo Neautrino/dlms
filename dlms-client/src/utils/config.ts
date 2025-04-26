@@ -14,6 +14,11 @@ export const pinataGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
 /**
  * Uploads a file to Pinata and returns the IPFS URL
  */
+
+export async function getUrl(cid: string) {
+  return `https://${pinataGateway}/ipfs/${cid}`;
+}
+
 export async function uploadFileToPinata(file: File) {
   try {
     const groups = await pinata.groups.public
