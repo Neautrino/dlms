@@ -8,6 +8,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Upload, X, Plus, Check, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
+import { connection } from '@/utils/program';
 
 // Single atom for all form state
 const formStateAtom = atom({
@@ -25,8 +27,8 @@ const formStateAtom = atom({
   state: '',
   postalCode: '',
   country: '',
-  verificationDocuments: '',
-  relevantDocuments: '',
+  verificationDocuments: null as File | null,
+  relevantDocuments: [] as File[],
   
   // Labor specific fields
   experience: [] as string[],
@@ -48,7 +50,7 @@ const formStateAtom = atom({
 // Registration component
 export default function Registration() {
   const router = useRouter();
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -56,7 +58,6 @@ export default function Registration() {
   const [currentLanguage, setCurrentLanguage] = useState('');
   const [currentExperience, setCurrentExperience] = useState('');
   const [currentCertification, setCurrentCertification] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [currentWorkHistory, setCurrentWorkHistory] = useState({
     title: '',
     description: '',
@@ -64,7 +65,7 @@ export default function Registration() {
   });
 
   // Theme integration
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Form state
@@ -79,12 +80,7 @@ export default function Registration() {
     return null;
   }
 
-  const isDarkMode = theme === 'dark';
-
-  // Toggle dark/light mode
-  const toggleDarkMode = () => {
-    setTheme(isDarkMode ? 'light' : 'dark');
-  };
+  const isDarkMode = resolvedTheme === 'dark';
 
   // Handle image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,80 +198,202 @@ export default function Registration() {
     });
   };
 
+  // Handler for verification document file
+  const handleVerificationDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormState({ ...formState, verificationDocuments: file });
+  };
+
+  // Handler for relevant documents files
+  const handleRelevantDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    setFormState({ ...formState, relevantDocuments: files });
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    // Frontend validation for required fields
+    // Basic fields
+    if (!formState.name.trim()) {
+      setErrorMessage('Full Name is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.bio.trim()) {
+      setErrorMessage('Bio is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.gender) {
+      setErrorMessage('Gender is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.dateOfBirth) {
+      setErrorMessage('Date of Birth is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.languages.length) {
+      setErrorMessage('At least one language is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.city.trim()) {
+      setErrorMessage('City is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.state.trim()) {
+      setErrorMessage('State/Province is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.postalCode.trim()) {
+      setErrorMessage('Postal Code is required.'); setIsSubmitting(false); return;
+    }
+    if (!formState.country.trim()) {
+      setErrorMessage('Country is required.'); setIsSubmitting(false); return;
+    }
+    // Profile image required
+    if (!profileImage) {
+      setErrorMessage('Profile picture is required.'); setIsSubmitting(false); return;
+    }
+    // Verification document required
+    if (!formState.verificationDocuments) {
+      setErrorMessage('Verification document is required.'); setIsSubmitting(false); return;
+    }
+    // Role-specific required fields
+    if (formState.role === UserRole.Labour) {
+      if (!formState.skills.length) {
+        setErrorMessage('At least one skill is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.experience.length) {
+        setErrorMessage('At least one experience is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.certifications.length) {
+        setErrorMessage('At least one certification is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.workHistory.length) {
+        setErrorMessage('At least one work history entry is required.'); setIsSubmitting(false); return;
+      }
+    } else if (formState.role === UserRole.Manager) {
+      if (!formState.companyDetails.company.trim()) {
+        setErrorMessage('Company Name is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.companyDetails.industry.trim()) {
+        setErrorMessage('Industry is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.companyDetails.founded) {
+        setErrorMessage('Year Founded is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.companyDetails.location.trim()) {
+        setErrorMessage('Company Location is required.'); setIsSubmitting(false); return;
+      }
+      if (!formState.managementExperience) {
+        setErrorMessage('Management Experience is required.'); setIsSubmitting(false); return;
+      }
+    }
+
     try {
       if (!publicKey) {
         throw new Error('Wallet not connected');
       }
-
       if (!formState.role) {
         throw new Error('Please select a role');
       }
 
-      // Construct metadata object based on role
-      const metadata: UserMetadata = {
-        name: formState.name,
-        bio: formState.bio,
-        profileImage: profileImage || undefined,
-        gender: formState.gender || undefined,
-        dateOfBirth: formState.dateOfBirth ? new Date(formState.dateOfBirth) : undefined,
-        languages: formState.languages.length > 0 ? formState.languages : undefined,
-        city: formState.city || undefined,
-        state: formState.state || undefined,
-        postalCode: formState.postalCode || undefined,
-        country: formState.country || undefined,
-        verificationDocuments: formState.verificationDocuments || undefined,
-        relevantDocuments: formState.relevantDocuments || undefined,
-      };
+      // Prepare FormData
+      const formData = new FormData();
+      formData.append('name', formState.name);
+      formData.append('bio', formState.bio);
+      formData.append('walletAddress', publicKey.toString());
+      formData.append('gender', formState.gender || '');
+      formData.append('dateOfBirth', formState.dateOfBirth || '');
+      formData.append('languages', formState.languages.join(','));
+      formData.append('city', formState.city || '');
+      formData.append('state', formState.state || '');
+      formData.append('postalCode', formState.postalCode || '');
+      formData.append('country', formState.country || '');
 
-      // Add role-specific fields
-      if (formState.role === UserRole.Labour) {
-        (metadata as LaborMetadata).experience = formState.experience.length > 0 ? formState.experience : undefined;
-        (metadata as LaborMetadata).skillsets = formState.skills.length > 0 ? formState.skills : undefined;
-        (metadata as LaborMetadata).certifications = formState.certifications.length > 0 ? formState.certifications : undefined;
-        (metadata as LaborMetadata).workHistory = formState.workHistory.length > 0 ? formState.workHistory : undefined;
-      } else {
-        (metadata as ManagerMetadata).companyDetails = {
-          ...formState.companyDetails,
-          industryFocus: formState.companyDetails.industryFocus && formState.companyDetails.industryFocus.length > 0
-            ? formState.companyDetails.industryFocus
-            : undefined
-        };
-        (metadata as ManagerMetadata).managementExperience = formState.managementExperience;
+      // Handle profile image (if any)
+      if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('data:')) {
+        // Convert base64 to Blob
+        const arr = profileImage.split(',');
+        if (arr[0] && arr[1]) {
+          const mimeMatch = arr[0].match(/:(.*?);/);
+          if (mimeMatch && mimeMatch[1]) {
+            const mime = mimeMatch[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            const file = new File([u8arr], 'profile-image.png', { type: mime });
+            formData.append('profileImage', file);
+          }
+        }
       }
 
-      // Initial user account data
-      const userAccount: Partial<UserAccount> = {
-        authority: publicKey.toString(),
-        name: formState.name,
-        metadata_uri: '', // Will be generated and populated by backend
-        active: true,
-        verified: false,
-        role: formState.role,
-        spam: false,
-      };
+      // Handle verification document (single file)
+      if (formState.verificationDocuments) {
+        formData.append('verificationDocuments', formState.verificationDocuments);
+      }
 
-      // Send data to your blockchain backend
-      const response = await fetch('/api/users/register', {
+      // Handle relevant documents (multiple files)
+      if (formState.relevantDocuments && formState.relevantDocuments.length > 0) {
+        formState.relevantDocuments.forEach((file, idx) => {
+          formData.append(`relevantDocuments${idx}`, file);
+        });
+      }
+
+      let endpoint = '';
+      if (formState.role === UserRole.Labour) {
+        // Labour-specific fields
+        formData.append('skillsets', formState.skills.join(','));
+        formData.append('experience', formState.experience.join(','));
+        formData.append('certifications', formState.certifications.join(','));
+        // Work history as a string: title~description~duration|title~description~duration
+        const workHistoryString = formState.workHistory
+          .map(w => `${w.title}~${w.description}~${w.duration}`)
+          .join('|');
+        formData.append('workHistory', workHistoryString);
+        endpoint = '/api/register-labour';
+      } else {
+        // Manager-specific fields
+        formData.append('company', formState.companyDetails.company || '');
+        formData.append('industryFocus', (formState.companyDetails.industryFocus || []).join(','));
+        formData.append('founded', formState.companyDetails.founded ? String(formState.companyDetails.founded) : '');
+        formData.append('location', formState.companyDetails.location || '');
+        formData.append('managementExperience', formState.managementExperience ? String(formState.managementExperience) : '');
+        endpoint = '/api/register-manager';
+      }
+
+      // Send FormData to the correct endpoint
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          account: userAccount,
-          metadata: metadata,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(errorData.error || errorData.message || 'Registration failed');
       }
+
+      const { success, lastValidBlockHeight, serializedTransaction} = await response.json();
+
+      if (!success) {
+        throw new Error('Registration failed');
+      }
+
+      const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
+      transaction.recentBlockhash = lastValidBlockHeight;
+      transaction.feePayer = publicKey;
+
+      // Sign the transaction with the user's wallet
+      if (!signTransaction) {
+        throw new Error("Wallet does not support transaction signing");
+      }
+      const signedTransaction = await signTransaction(transaction);
+
+      // Send the signed transaction to the network
+      const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+
+      // Optionally, confirm the transaction
+      await connection.confirmTransaction(txid);
+
+      console.log('Transaction sent and confirmed:', txid);
 
       // Registration success - redirect to dashboard
       router.push(formState.role === UserRole.Labour ? '/labor-dashboard' : '/manager-dashboard');
@@ -401,6 +519,7 @@ export default function Registration() {
                       : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                     } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                   placeholder="Tell us about yourself"
+                  required
                 />
               </div>
 
@@ -445,6 +564,7 @@ export default function Registration() {
                         ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
+                    required
                   >
                     <option value="">Select gender</option>
                     <option value="Male">Male</option>
@@ -467,6 +587,7 @@ export default function Registration() {
                         ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
+                    required
                   />
                 </div>
               </div>
@@ -486,6 +607,7 @@ export default function Registration() {
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     placeholder="Add a language"
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage())}
+                    required
                   />
                   <button
                     type="button"
@@ -538,6 +660,7 @@ export default function Registration() {
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     placeholder="Enter your city"
+                    required
                   />
                 </div>
 
@@ -555,6 +678,7 @@ export default function Registration() {
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     placeholder="Enter your state"
+                    required
                   />
                 </div>
               </div>
@@ -574,6 +698,7 @@ export default function Registration() {
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     placeholder="Enter postal code"
+                    required
                   />
                 </div>
 
@@ -591,8 +716,28 @@ export default function Registration() {
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     placeholder="Enter your country"
+                    required
                   />
                 </div>
+              </div>
+
+              {/* Verification Documents in Basic Details */}
+              <div>
+                <label htmlFor="userVerificationDocuments" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Verification Documents</label>
+                <input
+                  type="file"
+                  id="userVerificationDocuments"
+                  accept="application/pdf,image/*"
+                  onChange={handleVerificationDocumentChange}
+                  className={`w-full px-4 py-2 rounded-lg border ${isDarkMode
+                    ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
+                  } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
+                  required
+                />
+                {formState.verificationDocuments && (
+                  <div className="mt-1 text-xs text-green-600">{formState.verificationDocuments.name}</div>
+                )}
               </div>
             </div>
 
@@ -643,6 +788,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add a skill"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                        required
                       />
                       <button
                         type="button"
@@ -695,6 +841,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add experience"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addExperience())}
+                        required
                       />
                       <button
                         type="button"
@@ -747,6 +894,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add certification"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())}
+                        required
                       />
                       <button
                         type="button"
@@ -799,6 +947,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Job title"
+                          required
                         />
                       </div>
                       <div>
@@ -811,6 +960,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Duration (e.g., Jan 2020 - Dec 2022)"
+                          required
                         />
                       </div>
                       <div>
@@ -823,6 +973,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Job description"
+                          required
                         />
                       </div>
                     </div>
@@ -869,37 +1020,25 @@ export default function Registration() {
                   </div>
 
                   <div>
-                    <label htmlFor="userVerificationDocuments" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Verification Documents
-                    </label>
-                    <textarea
-                      id="userVerificationDocuments"
-                      value={formState.verificationDocuments}
-                      onChange={(e) => setFormState({ ...formState, verificationDocuments: e.target.value })}
-                      rows={2}
-                      className={`w-full px-4 py-2 rounded-lg border ${isDarkMode
-                          ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
-                        } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
-                      placeholder="List any verification documents"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="userRelevantDocuments" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      Relevant Documents
-                    </label>
-                    <textarea
+                    <label htmlFor="userRelevantDocuments" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Relevant Documents</label>
+                    <input
+                      type="file"
                       id="userRelevantDocuments"
-                      value={formState.relevantDocuments}
-                      onChange={(e) => setFormState({ ...formState, relevantDocuments: e.target.value })}
-                      rows={2}
+                      accept="application/pdf,image/*"
+                      multiple
+                      onChange={handleRelevantDocumentsChange}
                       className={`w-full px-4 py-2 rounded-lg border ${isDarkMode
-                          ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
-                        } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
-                      placeholder="List any relevant documents"
+                        ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
+                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
+                      } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                     />
+                    {formState.relevantDocuments && formState.relevantDocuments.length > 0 && (
+                      <div className="mt-1 text-xs text-green-600">
+                        {formState.relevantDocuments.map((file, idx) => (
+                          <div key={idx}>{file.name}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -921,6 +1060,7 @@ export default function Registration() {
                           : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                         } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                       placeholder="Enter company name"
+                      required
                     />
                   </div>
 
@@ -941,6 +1081,7 @@ export default function Registration() {
                           : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                         } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                       placeholder="Enter industry"
+                      required
                     />
                   </div>
 
@@ -961,6 +1102,7 @@ export default function Registration() {
                           : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                         } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                       placeholder="Enter year founded"
+                      required
                     />
                   </div>
 
@@ -981,6 +1123,7 @@ export default function Registration() {
                           : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                         } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                       placeholder="Enter company location"
+                      required
                     />
                   </div>
 
@@ -1001,6 +1144,7 @@ export default function Registration() {
                           : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                         } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                       placeholder="Enter years of management experience"
+                      required
                     />
                   </div>
                 </>
@@ -1046,7 +1190,7 @@ export default function Registration() {
           {/* Form Card */}
           <main className="flex-1 flex flex-col items-center order-1 md:order-none">
             <div className={`w-full max-w-2xl p-10 rounded-2xl border ${isDarkMode ? 'bg-gray-900 border-gray-800 shadow-2xl' : 'bg-white border-gray-200 shadow-xl'}`}>
-              <h1 className="text-3xl font-bold mb-2 text-center">Registration</h1>
+              <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-center" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>Registration</h1>
               <p className={`mb-8 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Create your DLabor account</p>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {renderFormStep()}
@@ -1060,6 +1204,15 @@ export default function Registration() {
           {/* Sidebar Stepper on the right */}
           <aside className="w-full md:w-1/3 flex-shrink-0 order-2 md:order-2 flex flex-col items-end">
             <div className="w-full flex flex-col gap-6 items-end mt-8 md:mt-0">
+              {/* Demo Card Above */}
+              <div className={`w-64 mb-4 p-4 rounded-xl shadow-md flex items-center gap-4 ${isDarkMode ? 'bg-gray-800 border border-gray-700 text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}>
+                <span className="bg-indigo-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-xl font-bold">🏢</span>
+                <div>
+                  <div className="font-semibold">Company Operations</div>
+                  <div className="text-xs text-gray-400">Manage your company</div>
+                </div>
+              </div>
+              {/* Stepper */}
               {[
                 { label: 'Choose Role', step: 1 },
                 { label: 'Basic Details', step: 2 },
@@ -1069,7 +1222,7 @@ export default function Registration() {
                 return (
                   <button
                     key={step}
-                    className={`flex items-center gap-3 w-64 justify-end px-6 py-4 rounded-xl border transition-all duration-200 shadow-md
+                    className={`flex items-center gap-3 w-64 justify-end px-4 py-3 rounded-xl border transition-all duration-200 shadow-md
                       ${isActive
                         ? isDarkMode
                           ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-500 scale-105 font-bold shadow-xl'
@@ -1079,21 +1232,29 @@ export default function Registration() {
                           : 'bg-transparent border-gray-300 text-gray-600 hover:bg-gray-100'}
                       ${formState.step > step ? 'opacity-70' : ''}
                     `}
-                    style={{ minHeight: isActive ? 64 : 48 }}
+                    style={{ minHeight: 48, height: 56 }}
                     disabled={formState.step < step}
                     onClick={() => formState.step > step && setFormState({ ...formState, step })}
                   >
-                    <span className={`h-10 w-10 flex items-center justify-center rounded-full border-2 text-xl
+                    <span className={`h-8 w-8 flex items-center justify-center rounded-full border-2 text-lg
                       ${isActive
                         ? isDarkMode ? 'border-white bg-white/20 text-white' : 'border-white bg-white/20 text-white'
                         : isDarkMode ? 'border-gray-700 bg-gray-900 text-gray-400' : 'border-gray-300 bg-white text-gray-400'}
                     `}>
                       {step}
                     </span>
-                    <span className="flex-1 text-right">{label}</span>
+                    <span className="flex-1 text-right text-base font-medium">{label}</span>
                   </button>
                 );
               })}
+              {/* Demo Card Below */}
+              <div className={`w-64 mt-4 p-4 rounded-xl shadow-md flex items-center gap-4 ${isDarkMode ? 'bg-gray-800 border border-gray-700 text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}>
+                <span className="bg-purple-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-xl font-bold">🔒</span>
+                <div>
+                  <div className="font-semibold">Secure Solution</div>
+                  <div className="text-xs text-gray-400">Your data is safe</div>
+                </div>
+              </div>
             </div>
           </aside>
         </div>

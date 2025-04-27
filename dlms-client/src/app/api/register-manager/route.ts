@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import { NextRequest } from "next/server";
 import { getUrl, pinata, uploadFileToPinata, uploadMetadataToPinata } from "@/utils/config";
-import { LaborMetadata, ManagerMetadata } from "@/types/user";
+import { ManagerMetadata } from "@/types/user";
 import { program } from "@/utils/program";
 import bs58 from "bs58";
 
@@ -139,6 +139,7 @@ export async function POST(request: NextRequest) {
 		return Response.json({
 			success: true,
 			metadataUrl,
+			lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
 			serializedTransaction: base58SerializedTx,
 			metadata
 		}, {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Laptop } from 'lucide-react';
+import { Sun, MoonStar, MonitorSmartphone } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,9 +21,9 @@ export function ThemeToggle() {
 
   // Determine the icon to show based on current theme
   const currentIcon = theme === 'dark' ? (
-    <Moon className="h-6 w-6" />
+    <MoonStar className="h-6 w-6" />
   ) : theme === 'system' ? (
-    <Laptop className="h-6 w-6" />
+    <MonitorSmartphone className="h-6 w-6" />
   ) : (
     <Sun className="h-6 w-6" />
   );
@@ -41,38 +41,41 @@ export function ThemeToggle() {
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            className={`absolute right-14 flex items-center ${contrastBg} rounded-full overflow-hidden border border-border shadow-md`}
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 'auto', opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            className={`absolute right-14 flex items-center ${contrastBg} rounded-2xl overflow-hidden border border-gray-300 dark:border-gray-700 shadow-2xl z-20`}
+            initial={{ scale: 0.8, opacity: 0, x: 20 }}
+            animate={{ scale: 1, opacity: 1, x: 0 }}
+            exit={{ scale: 0.8, opacity: 0, x: 20 }}
+            transition={{ duration: 0.25 }}
           >
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full ${contrastBg} hover:bg-opacity-80`}
+              className={`rounded-full ${contrastBg} hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors`}
               onClick={() => handleThemeChange('light')}
               aria-label="Light theme"
+              title="Light mode"
             >
-              <Sun className="h-6 w-6" />
+              <Sun className="h-6 w-6 text-yellow-500" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full ${contrastBg} hover:bg-opacity-80`}
+              className={`rounded-full ${contrastBg} hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors`}
               onClick={() => handleThemeChange('dark')}
               aria-label="Dark theme"
+              title="Dark mode"
             >
-              <Moon className="h-6 w-6" />
+              <MoonStar className="h-6 w-6 text-indigo-500" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className={`rounded-full ${contrastBg} hover:bg-opacity-80`}
+              className={`rounded-full ${contrastBg} hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors`}
               onClick={() => handleThemeChange('system')}
               aria-label="System theme"
+              title="System (device) mode"
             >
-              <Laptop className="h-6 w-6" />
+              <MonitorSmartphone className="h-6 w-6 text-green-500" />
             </Button>
           </motion.div>
         )}
@@ -82,8 +85,9 @@ export function ThemeToggle() {
         variant="ghost"
         size="icon"
         onClick={toggleExpand}
-        className="relative z-10 bg-gray-700 text-white  rounded-full"
+        className="relative z-30 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-white border border-gray-300 dark:border-gray-700 rounded-full shadow-md hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors"
         aria-label="Toggle theme selector"
+        title="Change theme"
       >
         {currentIcon}
       </Button>
