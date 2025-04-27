@@ -3,9 +3,45 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css'; // Important for button styles
+import { useEffect, useState } from 'react';
+import RegistrationPage from '@/components/pages/RegistrationPage';
+import UserDashboard from '@/components/pages/UserDashboard';
 
 function Page() {
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRegistered, setIsRegistered] = useState(false);
+
+  useEffect(() => {
+    const checkUserRegistration = async () => {
+      if (!publicKey) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/get-user-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            walletAddress: publicKey.toString(),
+          }),
+        });
+
+        const data = await response.json();
+        setIsRegistered(data.exists);
+      } catch (error) {
+        console.error('Error checking user registration:', error);
+        setIsRegistered(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUserRegistration();
+  }, [publicKey]);
 
   if (!connected) {
     return (
@@ -22,11 +58,15 @@ function Page() {
     );
   }
 
-  return (
-    <div>
-      <h1>Home</h1>
-    </div>
-  );
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  return isRegistered ? <UserDashboard /> : <RegistrationPage />;
 }
 
 export default Page;
