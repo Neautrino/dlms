@@ -1,48 +1,6 @@
 import { FullUserData, UserRole } from "@/types/user";
 import { FullProjectData, ProjectStatus } from "@/types/project";
 
-const mockProjects = [
-    {
-      manager: "manager1",
-      title: "DeFi Platform Development",
-      metadataUri: "https://example.com/metadata/1",
-      dailyRate: BigInt(5000),
-      durationDays: 90,
-      maxLabourers: 5,
-      labourCount: 3,
-      status: "open" as const,
-      escrowAccount: "escrow1",
-      timestamp: BigInt(Date.now()),
-      index: 1
-    },
-    {
-      manager: "manager2",
-      title: "Smart Contract Audit",
-      metadataUri: "https://example.com/metadata/2",
-      dailyRate: BigInt(3000),
-      durationDays: 14,
-      maxLabourers: 3,
-      labourCount: 2,
-      status: "open" as const,
-      escrowAccount: "escrow2",
-      timestamp: BigInt(Date.now()),
-      index: 2
-    },
-    {
-      manager: "manager3",
-      title: "NFT Marketplace UI/UX",
-      metadataUri: "https://example.com/metadata/3",
-      dailyRate: BigInt(4000),
-      durationDays: 30,
-      maxLabourers: 4,
-      labourCount: 1,
-      status: "open" as const,
-      escrowAccount: "escrow3",
-      timestamp: BigInt(Date.now()),
-      index: 3
-    }
-  ];
-
 export const MOCK_PROJECTS: FullProjectData[] = [
     {
       project: {
@@ -314,6 +272,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
 export const MOCK_USERS: FullUserData[] = [
   {
     account: {
+      publicKey: "BvzKvn5RwARA3nkYf1FB6xfRxd8NUBc3HjvVqXAjgZ2M",
       authority: "BvzKvn5RwARA3nkYf1FB6xfRxd8NUBc3HjvVqXAjgZ2M",
       name: "Alex Johnson",
       metadata_uri: "ipfs://Qmabcd123456",
@@ -323,25 +282,39 @@ export const MOCK_USERS: FullUserData[] = [
       rating_count: 12,
       timestamp: Date.now() - 3600000 * 24 * 30,
       index: 1,
-      role: UserRole.Labor,
+      role: UserRole.Labour,
       spam: false
     },
     metadata: {
       name: "Alex Johnson",
-      age: 28,
       bio: "Experienced electrician with a focus on residential and commercial installations.",
       profileImage: "/api/placeholder/80/80",
+      gender: "Male",
+      dateOfBirth: new Date("1995-05-15"),
+      languages: ["English", "Spanish"],
+      city: "Portland",
+      state: "OR",
+      country: "USA",
       experience: ["5 years at City Electric", "3 years independent contracting"],
       skillsets: ["Electrical installation", "Circuit diagnosis", "Smart home setup", "Solar panel installation"],
-      availability: "Weekdays 8am-5pm",
-      hourlyRate: 45,
-      languages: ["English", "Spanish"],
       certifications: ["Licensed Electrician", "Solar Installation Certificate"],
-      preferredLocation: "Within 25 miles of downtown"
+      workHistory: [
+        {
+          title: "Senior Electrician",
+          description: "Led residential and commercial electrical installations",
+          duration: "3 years"
+        },
+        {
+          title: "Independent Contractor",
+          description: "Specialized in smart home installations",
+          duration: "2 years"
+        }
+      ]
     }
   },
   {
     account: {
+      publicKey: "Fj2KmxRwCvE3nkXOeQcYgjvn8FGd9WzBc1HbvFqZDngH",
       authority: "Fj2KmxRwCvE3nkXOeQcYgjvn8FGd9WzBc1HbvFqZDngH",
       name: "Sarah Miller",
       metadata_uri: "ipfs://Qmefgh789012",
@@ -356,22 +329,27 @@ export const MOCK_USERS: FullUserData[] = [
     },
     metadata: {
       name: "Sarah Miller",
-      age: 35,
       bio: "Project manager at BuildRight Construction, focusing on sustainable building practices.",
       profileImage: "/api/placeholder/80/80",
-      company: "BuildRight Construction",
+      gender: "Female",
+      dateOfBirth: new Date("1988-03-20"),
+      languages: ["English"],
+      city: "Portland",
+      state: "OR",
+      country: "USA",
       companyDetails: {
+        company: "BuildRight Construction",
         industry: "Construction",
-        size: "50-100 employees",
         founded: 2012,
         location: "Portland, OR",
-        website: "buildright.example.com"
+        industryFocus: ["Residential", "Commercial", "Sustainable Building"]
       },
-      hiringFrequency: "Weekly"
+      managementExperience: 8
     }
   },
   {
     account: {
+      publicKey: "Hjk8LmnPqAs3ZjvD2dGhT7rFkY9Bc1HwbvPqXKlm5N",
       authority: "Hjk8LmnPqAs3ZjvD2dGhT7rFkY9Bc1HwbvPqXKlm5N",
       name: "Miguel Santos",
       metadata_uri: "ipfs://Qmijkl345678",
@@ -381,25 +359,39 @@ export const MOCK_USERS: FullUserData[] = [
       rating_count: 8,
       timestamp: Date.now() - 3600000 * 24 * 10,
       index: 3,
-      role: UserRole.Labor,
+      role: UserRole.Labour,
       spam: false
     },
     metadata: {
       name: "Miguel Santos",
-      age: 31,
       bio: "Skilled carpenter with expertise in custom cabinetry and furniture.",
       profileImage: "/api/placeholder/80/80",
+      gender: "Male",
+      dateOfBirth: new Date("1992-08-10"),
+      languages: ["English", "Portuguese"],
+      city: "San Francisco",
+      state: "CA",
+      country: "USA",
       experience: ["7 years in fine woodworking", "3 years as lead carpenter"],
       skillsets: ["Cabinetry", "Furniture making", "Finishing", "Restoration"],
-      availability: "Flexible schedule",
-      hourlyRate: 55,
-      languages: ["English", "Portuguese"],
       certifications: ["Master Carpenter"],
-      preferredLocation: "Citywide"
+      workHistory: [
+        {
+          title: "Lead Carpenter",
+          description: "Specialized in custom cabinetry and furniture",
+          duration: "3 years"
+        },
+        {
+          title: "Fine Woodworker",
+          description: "Created custom furniture pieces",
+          duration: "4 years"
+        }
+      ]
     }
   },
   {
     account: {
+      publicKey: "Pqr5TuvWxYz7AbC8DeFgH1IjKlM9Bc1HbvPqXNopq2R",
       authority: "Pqr5TuvWxYz7AbC8DeFgH1IjKlM9Bc1HbvPqXNopq2R",
       name: "Emily Chen",
       metadata_uri: "ipfs://Qmnopq901234",
@@ -414,22 +406,27 @@ export const MOCK_USERS: FullUserData[] = [
     },
     metadata: {
       name: "Emily Chen",
-      age: 42,
       bio: "Director of operations at GreenScape, specializing in sustainable landscaping projects.",
       profileImage: "/api/placeholder/80/80",
-      company: "GreenScape Design",
+      gender: "Female",
+      dateOfBirth: new Date("1981-11-05"),
+      languages: ["English", "Mandarin"],
+      city: "Seattle",
+      state: "WA",
+      country: "USA",
       companyDetails: {
+        company: "GreenScape Design",
         industry: "Landscaping & Architecture",
-        size: "20-50 employees",
         founded: 2015,
         location: "Seattle, WA",
-        website: "greenscape.example.com"
+        industryFocus: ["Sustainable Landscaping", "Architecture", "Urban Design"]
       },
-      hiringFrequency: "Monthly"
+      managementExperience: 12
     }
   },
   {
     account: {
+      publicKey: "Stu6VwxYzAb1CdEfGh2IjKl3MnOp7Bc1HbvQrStuv4W",
       authority: "Stu6VwxYzAb1CdEfGh2IjKl3MnOp7Bc1HbvQrStuv4W",
       name: "David Wilson",
       metadata_uri: "ipfs://Qmrstu567890",
@@ -439,21 +436,34 @@ export const MOCK_USERS: FullUserData[] = [
       rating_count: 19,
       timestamp: Date.now() - 3600000 * 24 * 90,
       index: 5,
-      role: UserRole.Labor,
+      role: UserRole.Labour,
       spam: false
     },
     metadata: {
       name: "David Wilson",
-      age: 39,
       bio: "HVAC technician with 15+ years of experience in residential and commercial systems.",
       profileImage: "/api/placeholder/80/80",
+      gender: "Male",
+      dateOfBirth: new Date("1984-06-25"),
+      languages: ["English"],
+      city: "Denver",
+      state: "CO",
+      country: "USA",
       experience: ["10 years at Cool Air Systems", "5 years at Home Comfort HVAC"],
       skillsets: ["HVAC installation", "System maintenance", "Energy efficiency consulting", "Refrigeration"],
-      availability: "Currently unavailable",
-      hourlyRate: 60,
-      languages: ["English"],
       certifications: ["HVAC Certified Technician", "EPA 608 Certification"],
-      preferredLocation: "Metro area only"
+      workHistory: [
+        {
+          title: "Senior HVAC Technician",
+          description: "Led commercial HVAC installations and maintenance",
+          duration: "5 years"
+        },
+        {
+          title: "HVAC Specialist",
+          description: "Specialized in residential systems",
+          duration: "10 years"
+        }
+      ]
     }
   }
 ];

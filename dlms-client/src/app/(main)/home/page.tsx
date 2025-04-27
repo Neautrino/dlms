@@ -6,6 +6,7 @@ import '@solana/wallet-adapter-react-ui/styles.css'; // Important for button sty
 import { useEffect, useState } from 'react';
 import RegistrationPage from '@/components/pages/RegistrationPage';
 import UserDashboard from '@/components/pages/UserDashboard';
+import { MOCK_USERS } from '@/lib/DummyData';
 
 function Page() {
   const { connected, publicKey } = useWallet();
@@ -66,7 +67,8 @@ function Page() {
     );
   }
 
-  return isRegistered ? <UserDashboard /> : <RegistrationPage />;
+  // return isRegistered ? <UserDashboard /> : <RegistrationPage />;
+  return <RegistrationPage />;
 }
 
 export default Page;
