@@ -19,6 +19,7 @@ export interface Project {
     escrow_account: string;
     timestamp: number;
     index: number;
+    publicKey: string;
 }
 
 export interface ProjectMetadata {

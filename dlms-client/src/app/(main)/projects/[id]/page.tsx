@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { MOCK_PROJECTS } from '@/lib/DummyData';
 import { FullProjectData, ProjectStatus } from '@/types/project';
+import ApplyToProjectForm from '@/components/ApplyToProjectForm';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const [project, setProject] = useState<FullProjectData | null>(null);
+  const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
 
   useEffect(() => {
     const projectId = parseInt(params.id as string);
@@ -262,13 +264,23 @@ export default function ProjectDetailsPage() {
                 </div>
                 <Progress value={(project.project.labour_count / project.project.max_labourers) * 100} />
               </div>
-              <Button className="w-full">
+              <Button 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                onClick={() => setIsApplyFormOpen(true)}
+              >
                 Apply for this Project
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Apply Form Popup */}
+      <ApplyToProjectForm
+        isOpen={isApplyFormOpen}
+        onClose={() => setIsApplyFormOpen(false)}
+        projectPublicKey={project.project.publicKey}
+      />
     </div>
   );
 } 
