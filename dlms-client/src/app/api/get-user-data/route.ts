@@ -1,4 +1,4 @@
-import { program } from "@/lib/program";
+import { program } from "@/utils/program";
 import { UserAccount, UserRole, FullUserData, LaborMetadata, ManagerMetadata } from "@/types/user";
 import { PublicKey } from "@solana/web3.js";
 import { NextResponse } from "next/server";

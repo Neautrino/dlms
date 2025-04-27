@@ -94,8 +94,9 @@ export default function ProjectsListingPage() {
     // Apply location filter
     if (locationFilter !== 'all') {
       result = result.filter(project => {
-        if (locationFilter === 'remote') return project.metadata.remote === true;
-        if (locationFilter === 'onsite') return project.metadata.remote === false;
+        const isRemote = project.metadata.location.toLowerCase().includes('remote');
+        if (locationFilter === 'remote') return isRemote;
+        if (locationFilter === 'onsite') return !isRemote;
         return true;
       });
     }
@@ -379,12 +380,12 @@ export default function ProjectsListingPage() {
           viewMode === 'grid' 
             ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
             : 'grid-cols-1'
-        } gap-6`}>
+        } gap-4`}>
           {filteredProjects.map((projectData) => (
             <Link href={`/projects/${projectData.project.index}`} key={projectData.project.index}>
               <Card className={`flex ${
                 viewMode === 'list' ? 'flex-row' : 'flex-col'
-              } rounded-xl overflow-hidden bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:ring-purple-500 dark:hover:ring-purple-400 transition-shadow h-full`}>
+              } rounded-xl overflow-hidden bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:ring-2 hover:ring-purple-500 dark:hover:ring-purple-400 transition-all duration-200 h-full group`}>
                 <div className={`relative ${
                   viewMode === 'list' ? 'w-1/3' : 'w-full'
                 }`}>
@@ -394,37 +395,46 @@ export default function ProjectsListingPage() {
                     height={200} 
                     alt={projectData.project.title}
                     className={`${
-                      viewMode === 'list' ? 'h-full' : 'h-40'
-                    } w-full object-cover`}
+                      viewMode === 'list' ? 'h-full' : 'h-32'
+                    } w-full object-cover transition-transform duration-300 group-hover:scale-105`}
                   />
                   <div className="absolute bottom-0 right-0 p-2">
                     <StatusBadge status={projectData.project.status} />
                   </div>
+                  {projectData.metadata.companyDetails?.verifiedDocument && (
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        Verified Company
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 
-                <CardContent className={`p-5 flex-grow flex flex-col ${
+                <CardContent className={`p-4 flex-grow flex flex-col ${
                   viewMode === 'list' ? 'w-2/3' : ''
                 }`}>
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">{projectData.project.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {projectData.project.title}
+                    </h3>
                     <div className="text-purple-600 dark:text-purple-400 font-bold whitespace-nowrap">
                       {formatCurrency(projectData.project.daily_rate)}/day
                     </div>
                   </div>
                   
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
                     {projectData.metadata.description}
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {projectData.metadata.requiredSkills.slice(0, 3).map((skill, idx) => (
-                      <Badge key={idx} className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {projectData.metadata.requiredSkills.slice(0, 2).map((skill, idx) => (
+                      <Badge key={idx} className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
                         {skill}
                       </Badge>
                     ))}
-                    {projectData.metadata.requiredSkills.length > 3 && (
+                    {projectData.metadata.requiredSkills.length > 2 && (
                       <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                        +{projectData.metadata.requiredSkills.length - 3} more
+                        +{projectData.metadata.requiredSkills.length - 2} more
                       </Badge>
                     )}
                   </div>
@@ -432,48 +442,28 @@ export default function ProjectsListingPage() {
                   <div className="mt-auto">
                     <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
                       <div className="flex items-center gap-1">
-                        <Calendar size={14} />
+                        <Calendar size={14} className="text-purple-500" />
                         <span>{projectData.project.duration_days} days</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Users size={14} />
-                        <span>{projectData.project.labour_count}/{projectData.project.max_labourers} hired</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Briefcase size={14} />
-                        <span>{projectData.metadata.category}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {projectData.metadata.remote ? (
-                          <>
-                            <Globe size={14} />
-                            <span>Remote</span>
-                          </>
-                        ) : (
-                          <>
-                            <MapPin size={14} />
-                            <span>{projectData.metadata.location}</span>
-                          </>
-                        )}
+                        <Users size={14} className="text-purple-500" />
+                        <span>{projectData.project.labour_count}/{projectData.project.max_labourers}</span>
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-3">
-                      <div className="flex items-center gap-1">
-                        <div className="relative w-5 h-5 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                    <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <div className="flex items-center gap-2">
+                        <div className="relative w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
                           <span className="text-xs font-medium text-purple-800 dark:text-purple-200">
                             {projectData.metadata.managerName.charAt(0)}
                           </span>
                         </div>
-                        <span className="text-gray-600 dark:text-gray-300">{projectData.metadata.managerName}</span>
-                        {projectData.metadata.company && (
-                          <span className="text-gray-500 dark:text-gray-400 ml-1">
-                            • {projectData.metadata.company}
-                          </span>
-                        )}
+                        <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                          {projectData.metadata.managerName}
+                        </span>
                       </div>
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Posted {formatRelativeTime(projectData.project.timestamp)}
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">
+                        {formatRelativeTime(projectData.project.timestamp)}
                       </span>
                     </div>
                   </div>
