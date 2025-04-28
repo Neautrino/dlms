@@ -7,14 +7,15 @@ import { useEffect, useState } from 'react';
 import RegistrationPage from '@/components/pages/RegistrationPage';
 import UserDashboard from '@/components/pages/UserDashboard';
 import { useAtom } from 'jotai';
-import { userAtom } from '@/lib/atoms/userAtom';
+import { currentUserAtom } from '@/lib/atoms';
+import { FullUserData } from '@/types/user';
 import { MOCK_USERS } from '@/lib/DummyData';
 
 function Page() {
   const { connected, publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
-  const [user, setUser] = useAtom(userAtom);
+  const [user, setUser] = useAtom(currentUserAtom);
 
   useEffect(() => {
     const checkUserRegistration = async () => {
@@ -81,8 +82,12 @@ function Page() {
     );
   }
 
-  // return isRegistered ? <UserDashboard /> : <RegistrationPage />;
-  return <UserDashboard userData={MOCK_USERS[0]} />;
+  if (!user) {
+    return <RegistrationPage />;
+  }
+
+  return <UserDashboard userData={user} />;
+  // return <UserDashboard userData={MOCK_USERS[0]} />;
 }
 
 export default Page;

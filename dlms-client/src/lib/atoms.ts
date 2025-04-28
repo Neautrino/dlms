@@ -15,6 +15,7 @@ export type ViewMode = 'grid' | 'list' | 'table';
 // View mode atom for users and projects pages
 export const viewModeAtom = atom<ViewMode>('list');
 export const selectedUserAtom = atom<FullUserData | null>(null);
+export const currentUserAtom = atom<FullUserData | null>(null);
 export const userFilterAtom = atom({
   search: '',
   role: 'all',
