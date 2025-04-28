@@ -6,16 +6,26 @@ import '@solana/wallet-adapter-react-ui/styles.css'; // Important for button sty
 import { useEffect, useState } from 'react';
 import RegistrationPage from '@/components/pages/RegistrationPage';
 import UserDashboard from '@/components/pages/UserDashboard';
+import { useAtom } from 'jotai';
+import { userAtom } from '@/lib/atoms/userAtom';
 import { MOCK_USERS } from '@/lib/DummyData';
 
 function Page() {
   const { connected, publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [user, setUser] = useAtom(userAtom);
 
   useEffect(() => {
     const checkUserRegistration = async () => {
       if (!publicKey) {
+        setIsLoading(false);
+        return;
+      }
+
+      // If we already have user data in the atom, use it
+      if (user) {
+        setIsRegistered(true);
         setIsLoading(false);
         return;
       }
@@ -33,6 +43,10 @@ function Page() {
 
         const data = await response.json();
         setIsRegistered(data.exists);
+        
+        if (data.exists && data.user) {
+          setUser(data.user);
+        }
       } catch (error) {
         console.error('Error checking user registration:', error);
         setIsRegistered(false);
@@ -42,7 +56,7 @@ function Page() {
     };
 
     checkUserRegistration();
-  }, [publicKey]);
+  }, [publicKey, setUser, user]);
 
   if (!connected) {
     return (
@@ -68,7 +82,7 @@ function Page() {
   }
 
   // return isRegistered ? <UserDashboard /> : <RegistrationPage />;
-  return <RegistrationPage />;
+  return <UserDashboard userData={MOCK_USERS[0]} />;
 }
 
 export default Page;

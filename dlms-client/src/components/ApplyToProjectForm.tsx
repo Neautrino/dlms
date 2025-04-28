@@ -24,15 +24,10 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    description: '',
-    skills: '',
-    experience: '',
-    availability: '',
-    expectedRate: '',
-    additionalInfo: ''
+    description: ''
   });
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 3;
+  const totalSteps = 1;
 
   const isDarkMode = resolvedTheme === 'dark';
 
@@ -56,11 +51,6 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
           walletAddress: publicKey.toString(),
           projectPublicKey,
           description: formData.description,
-          skills: formData.skills.split(',').map(s => s.trim()),
-          experience: formData.experience,
-          availability: formData.availability,
-          expectedRate: parseFloat(formData.expectedRate) || 0,
-          additionalInfo: formData.additionalInfo
         }),
       });
 
@@ -139,246 +129,36 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
                 </h2>
               </div>
               <p className={`mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                Showcase your talents and share why you're the perfect fit
+                Tell us why you're the perfect fit for this project
               </p>
-              
-              {/* Progress Indicator */}
-              <div className="flex justify-between items-center mt-8 mb-6">
-                {Array.from({ length: totalSteps }).map((_, index) => (
-                  <div 
-                    key={index} 
-                    className="flex flex-col items-center"
-                  >
-                    <div 
-                      className={`flex items-center justify-center w-10 h-10 rounded-full mb-2 ${
-                        currentStep > index + 1 
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
-                          : currentStep === index + 1 
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
-                            : isDarkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-200 text-gray-500'
-                      } transition-all duration-300`}
-                    >
-                      {currentStep > index + 1 ? <Check size={18} /> : index + 1}
-                    </div>
-                    <span className={`text-xs ${
-                      currentStep === index + 1 
-                        ? 'font-medium ' + (isDarkMode ? 'text-purple-400' : 'text-indigo-600')
-                        : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      {index === 0 ? 'Introduction' : index === 1 ? 'Skills & Experience' : 'Details'}
-                    </span>
-                    
-                    {/* Connector line */}
-                    {index < totalSteps - 1 && (
-                      <div className="absolute left-0 right-0 flex items-center justify-center">
-                        <div className={`h-0.5 w-full max-w-xs ${
-                          currentStep > index + 1 
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
-                            : isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
-                        }`}></div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              <AnimatePresence mode="wait">
-                {currentStep === 1 && (
-                  <motion.div
-                    key="step1"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
-                  >
-                    <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                      bg-opacity-50 backdrop-blur-sm
-                      ${isDarkMode 
-                        ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                        : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                      }"
-                    >
-                      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                      
-                      <label className="flex items-center gap-2 text-base font-medium mb-3">
-                        <Briefcase className="w-5 h-5 text-indigo-500" />
-                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Your Pitch</span>
-                      </label>
-                      <Textarea
-                        value={formData.description}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Tell us why you're interested in this project and what makes you uniquely qualified..."
-                        required
-                        className={`w-full min-h-[150px] rounded-xl transition-all duration-200 focus:ring-2 ${
-                          isDarkMode 
-                            ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                            : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                        }`}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentStep === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
-                  >
-                    <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                      bg-opacity-50 backdrop-blur-sm
-                      ${isDarkMode 
-                        ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                        : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                      }"
-                    >
-                      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                      
-                      <label className="flex items-center gap-2 text-base font-medium mb-3">
-                        <Star className="w-5 h-5 text-indigo-500" />
-                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Skills</span>
-                      </label>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          value={formData.skills}
-                          onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                          placeholder="e.g., React, Solidity, UI/UX, Project Management"
-                          className={`w-full pl-4 pr-12 py-3 rounded-xl transition-all duration-200 focus:ring-2 ${
-                            isDarkMode 
-                              ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                              : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                          }`}
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs opacity-70">
-                          comma-separated
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                      bg-opacity-50 backdrop-blur-sm
-                      ${isDarkMode 
-                        ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                        : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                      }"
-                    >
-                      <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                      
-                      <label className="flex items-center gap-2 text-base font-medium mb-3">
-                        <Info className="w-5 h-5 text-indigo-500" />
-                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Relevant Experience</span>
-                      </label>
-                      <Textarea
-                        value={formData.experience}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, experience: e.target.value })}
-                        placeholder="Describe your relevant experience, achievements, and previous projects..."
-                        className={`w-full min-h-[150px] rounded-xl transition-all duration-200 focus:ring-2 ${
-                          isDarkMode 
-                            ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                            : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                        }`}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentStep === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                        bg-opacity-50 backdrop-blur-sm
-                        ${isDarkMode 
-                          ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                          : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                        }"
-                      >
-                        <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                        
-                        <label className="flex items-center gap-2 text-base font-medium mb-3">
-                          <Clock className="w-5 h-5 text-indigo-500" />
-                          <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Availability</span>
-                        </label>
-                        <Input
-                          type="text"
-                          value={formData.availability}
-                          onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                          placeholder="e.g., Full-time, 20hrs/week, Weekends only"
-                          className={`w-full rounded-xl transition-all duration-200 focus:ring-2 ${
-                            isDarkMode 
-                              ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                              : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                          }`}
-                        />
-                      </div>
-
-                      <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                        bg-opacity-50 backdrop-blur-sm
-                        ${isDarkMode 
-                          ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                          : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                        }"
-                      >
-                        <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                        
-                        <label className="flex items-center gap-2 text-base font-medium mb-3">
-                          <DollarSign className="w-5 h-5 text-indigo-500" />
-                          <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Expected Rate (DLT)</span>
-                        </label>
-                        <Input
-                          type="number"
-                          value={formData.expectedRate}
-                          onChange={(e) => setFormData({ ...formData, expectedRate: e.target.value })}
-                          placeholder="Your rate in DLT tokens"
-                          className={`w-full rounded-xl transition-all duration-200 focus:ring-2 ${
-                            isDarkMode 
-                              ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                              : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
-                      bg-opacity-50 backdrop-blur-sm
-                      ${isDarkMode 
-                        ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
-                        : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
-                      }"
-                    >
-                      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
-                      
-                      <label className="flex items-center gap-2 text-base font-medium mb-3">
-                        <Info className="w-5 h-5 text-indigo-500" />
-                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Additional Information</span>
-                      </label>
-                      <Textarea
-                        value={formData.additionalInfo}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, additionalInfo: e.target.value })}
-                        placeholder="Share anything else that might be relevant to your application..."
-                        className={`w-full min-h-[120px] rounded-xl transition-all duration-200 focus:ring-2 ${
-                          isDarkMode 
-                            ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
-                            : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
-                        }`}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="group relative overflow-hidden rounded-2xl border border-opacity-30 p-6 transition-all duration-300 hover:shadow-md
+                bg-opacity-50 backdrop-blur-sm
+                ${isDarkMode 
+                  ? 'bg-gray-800/50 border-purple-500/20 hover:border-purple-500/30' 
+                  : 'bg-white/70 border-indigo-500/20 hover:border-indigo-500/40'
+                }"
+              >
+                <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-gradient-to-br from-indigo-600/10 to-purple-600/20 blur-3xl"></div>
+                
+                <label className="flex items-center gap-2 text-base font-medium mb-3">
+                  <Briefcase className="w-5 h-5 text-indigo-500" />
+                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Your Pitch</span>
+                </label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Tell us why you're interested in this project and what makes you uniquely qualified..."
+                  required
+                  className={`w-full min-h-[150px] rounded-xl transition-all duration-200 focus:ring-2 ${
+                    isDarkMode 
+                      ? 'bg-gray-900/80 border-gray-700 focus:ring-purple-500/30 focus:border-purple-500' 
+                      : 'bg-white border-gray-200 focus:ring-indigo-500/30 focus:border-indigo-500'
+                  }`}
+                />
+              </div>
 
               {error && (
                 <motion.div
@@ -392,16 +172,11 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
                 </motion.div>
               )}
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-800"
-              >
+              <div className="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-800">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={currentStep === 1 ? onClose : prevStep}
+                  onClick={onClose}
                   disabled={isSubmitting}
                   className={`px-6 py-3 rounded-xl ${
                     isDarkMode 
@@ -409,37 +184,27 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  {currentStep === 1 ? 'Cancel' : 'Previous'}
+                  Cancel
                 </Button>
                 
-                {currentStep < totalSteps ? (
-                  <Button
-                    type="button"
-                    onClick={nextStep}
-                    className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5 mr-2" />
-                        Submit Application
-                      </>
-                    )}
-                  </Button>
-                )}
-              </motion.div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5 mr-2" />
+                      Submit Application
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </motion.div>
         </motion.div>

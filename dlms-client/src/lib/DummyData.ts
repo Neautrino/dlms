@@ -4,6 +4,7 @@ import { FullProjectData, ProjectStatus } from "@/types/project";
 export const MOCK_PROJECTS: FullProjectData[] = [
     {
       project: {
+        publicKey: "BvzKvn5RwARA3nkYf1FB6xfRxd8NUBc3HjvVqXAjgZ2M",
         manager: "BvzKvn5RwARA3nkYf1FB6xfRxd8NUBc3HjvVqXAjgZ2M",
         title: "Residential Electrical Renovation",
         metadata_uri: "ipfs://Qmabcd123456",
@@ -44,6 +45,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
     },
     {
       project: {
+        publicKey: "Hj2KmxRwCvE3nkXOe4cYgjvn8FGd9WzBc1GtpFqZDngA",
         manager: "Hj2KmxRwCvE3nkXOe4cYgjvn8FGd9WzBc1GtpFqZDngA",
         title: "Commercial HVAC System Installation",
         metadata_uri: "ipfs://Qmefgh789012",
@@ -84,6 +86,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
     },
     {
       project: {
+        publicKey: "Pqr5TuvWxYz7AbC8DeFgH1IjKlM9Bc1HbvPqXNopq2R",
         manager: "Pqr5TuvWxYz7AbC8DeFgH1IjKlM9Bc1HbvPqXNopq2R",
         title: "Custom Kitchen Cabinet Installation",
         metadata_uri: "ipfs://Qmnopq901234",
@@ -124,6 +127,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
     },
     {
       project: {
+        publicKey: "Stu6VwxYzAb1CdEfGh2IjKl3MnOp7Bc1HbvQrStuv4W",
         manager: "Stu6VwxYzAb1CdEfGh2IjKl3MnOp7Bc1HbvQrStuv4W",
         title: "Office Building Network Infrastructure",
         metadata_uri: "ipfs://Qmrstu567890",
@@ -164,6 +168,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
     },
     {
       project: {
+        publicKey: "Xyz9AbCdEf2GhIjKl4MnOp8QrSt7UvWx6YzAbCdEfGh",
         manager: "Xyz9AbCdEf2GhIjKl4MnOp8QrSt7UvWx6YzAbCdEfGh",
         title: "Sustainable Landscaping Project",
         metadata_uri: "ipfs://Qmwxyz345678",
@@ -204,6 +209,7 @@ export const MOCK_PROJECTS: FullProjectData[] = [
     },
     {
       project: {
+        publicKey: "Lmn3OpQrSt5UvWxYz7AbCd9EfGh2IjKl4MnOp6QrStU",
         manager: "Lmn3OpQrSt5UvWxYz7AbCd9EfGh2IjKl4MnOp6QrStU",
         title: "Commercial Solar Panel Installation",
         metadata_uri: "ipfs://Qmlmno901234",
@@ -255,7 +261,7 @@ export const MOCK_USERS: FullUserData[] = [
       verified: true,
       rating: 48,
       rating_count: 12,
-      timestamp: Date.now() - 3600000 * 24 * 30,
+      timestamp: Math.floor(Date.now() / 1000) - 3600 * 24 * 30,
       index: 1,
       role: UserRole.Labour,
       spam: false
@@ -299,7 +305,7 @@ export const MOCK_USERS: FullUserData[] = [
       verified: true,
       rating: 50,
       rating_count: 24,
-      timestamp: Date.now() - 3600000 * 24 * 45,
+      timestamp: Math.floor(Date.now() / 1000) - 3600 * 24 * 45,
       index: 2,
       role: UserRole.Manager,
       spam: false
@@ -336,7 +342,7 @@ export const MOCK_USERS: FullUserData[] = [
       verified: false,
       rating: 42,
       rating_count: 8,
-      timestamp: Date.now() - 3600000 * 24 * 10,
+      timestamp: Math.floor(Date.now() / 1000) - 3600 * 24 * 10,
       index: 3,
       role: UserRole.Labour,
       spam: false
@@ -380,7 +386,7 @@ export const MOCK_USERS: FullUserData[] = [
       verified: true,
       rating: 49,
       rating_count: 31,
-      timestamp: Date.now() - 3600000 * 24 * 60,
+      timestamp: Math.floor(Date.now() / 1000) - 3600 * 24 * 60,
       index: 4,
       role: UserRole.Manager,
       spam: false
@@ -417,7 +423,7 @@ export const MOCK_USERS: FullUserData[] = [
       verified: true,
       rating: 47,
       rating_count: 19,
-      timestamp: Date.now() - 3600000 * 24 * 90,
+      timestamp: Math.floor(Date.now() / 1000) - 3600 * 24 * 90,
       index: 5,
       role: UserRole.Labour,
       spam: false

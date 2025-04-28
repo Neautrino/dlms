@@ -614,7 +614,7 @@ export default function UsersPage() {
                           Contact User
                         </button>
                         <button className="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-650 text-gray-800 dark:text-gray-200 font-medium transition-colors">
-                          View Profile
+                          Report User
                         </button>
                       </div>
                     </>
