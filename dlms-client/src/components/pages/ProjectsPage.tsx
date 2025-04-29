@@ -5,13 +5,14 @@ import { Search, Filter, Calendar, Clock, Users, ChevronDown, Tag, ArrowUpRight,
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import  {MOCK_PROJECTS}  from '@/lib/DummyData';
 import { FullProjectData, ProjectStatus } from '@/types/project';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAtom } from 'jotai';
+import { allProjectsAtom, paginatedProjectsAtom, currentPageAtom, hasMoreProjectsAtom } from '@/lib/atoms';
 
 // Animation variants
 const containerVariants = {
@@ -35,11 +36,7 @@ const itemVariants = {
   }
 };
 
-// Mock data
-
 export default function ProjectsListingPage() {
-  const [projects, setProjects] = useState<FullProjectData[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<FullProjectData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed' | 'cancelled'>('all');
@@ -48,19 +45,55 @@ export default function ProjectsListingPage() {
   const [rateSortOrder, setRateSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [durationSortOrder, setDurationSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   
-  // Load mock data
+  // Jotai atoms
+  const [allProjects, setAllProjects] = useAtom(allProjectsAtom);
+  const [paginatedProjects] = useAtom(paginatedProjectsAtom);
+  const [currentPage, setCurrentPage] = useAtom(currentPageAtom);
+  const [hasMoreProjects] = useAtom(hasMoreProjectsAtom);
+  
+  // Local state for filtered projects
+  const [filteredProjects, setFilteredProjects] = useState<FullProjectData[]>([]);
+  
+  // Fetch projects from API only once
   useEffect(() => {
-    setProjects(MOCK_PROJECTS);
-    setFilteredProjects(MOCK_PROJECTS);
-  }, []);
+    const fetchProjects = async () => {
+      // If we already have projects in the atom, don't fetch again
+      if (allProjects.length > 0) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/projects');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        
+        const data = await response.json();
+        setAllProjects(data);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+        setError('Failed to load projects. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProjects();
+  }, [allProjects.length, setAllProjects]);
 
   // Get unique categories for filter
-  const categories = ['all', ...Array.from(new Set(projects.map(p => p.metadata.category)))];
+  const categories = ['all', ...Array.from(new Set(allProjects.map(p => p.metadata.category)))];
 
-  // Apply filters and search
+  // Apply filters and search to paginated projects
   useEffect(() => {
-    let result = [...projects];
+    let result = [...paginatedProjects];
     
     // Apply search
     if (searchTerm) {
@@ -123,7 +156,7 @@ export default function ProjectsListingPage() {
     }
     
     setFilteredProjects(result);
-  }, [projects, searchTerm, statusFilter, categoryFilter, locationFilter, rateSortOrder, durationSortOrder]);
+  }, [paginatedProjects, searchTerm, statusFilter, categoryFilter, locationFilter, rateSortOrder, durationSortOrder]);
 
   // Format timestamp to relative time
   const formatRelativeTime = (timestamp: number) => {
@@ -178,6 +211,15 @@ export default function ProjectsListingPage() {
         {statusText}
       </span>
     );
+  };
+
+  const loadMoreProjects = () => {
+    setIsLoadingMore(true);
+    // Simulate loading delay for better UX
+    setTimeout(() => {
+      setCurrentPage(prev => prev + 1);
+      setIsLoadingMore(false);
+    }, 500);
   };
 
   return (
@@ -313,7 +355,7 @@ export default function ProjectsListingPage() {
         <motion.div variants={itemVariants} className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Showing {filteredProjects.length} of {projects.length} projects
+              Showing {filteredProjects.length} of {allProjects.length} projects
             </div>
             <div className="flex gap-4">
               <button
@@ -375,105 +417,133 @@ export default function ProjectsListingPage() {
           </div>
         </motion.div>
         
+        {/* Loading state */}
+        {isLoading && (
+          <motion.div variants={itemVariants} className="p-12 text-center">
+            <div className="mb-4">
+              <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            </div>
+            <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Loading projects...</h3>
+          </motion.div>
+        )}
+        
+        {/* Error state */}
+        {error && !isLoading && (
+          <motion.div variants={itemVariants} className="p-12 text-center">
+            <div className="mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Error loading projects</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </motion.div>
+        )}
+        
         {/* Projects Grid/List */}
-        <motion.div variants={itemVariants} className={`grid ${
-          viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
-            : 'grid-cols-1'
-        } gap-4`}>
-          {filteredProjects.map((projectData) => (
-            <Link href={`/projects/${projectData.project.index}`} key={projectData.project.index}>
-              <Card className={`flex ${
-                viewMode === 'list' ? 'flex-row' : 'flex-col'
-              } rounded-xl overflow-hidden bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:ring-2 hover:ring-purple-500 dark:hover:ring-purple-400 transition-all duration-200 h-full group`}>
-                <div className={`relative ${
-                  viewMode === 'list' ? 'w-1/3' : 'w-full'
-                }`}>
-                  <Image 
-                    src={projectData.metadata.projectImage || "/api/placeholder/400/200"} 
-                    width={400} 
-                    height={200} 
-                    alt={projectData.project.title}
-                    className={`${
-                      viewMode === 'list' ? 'h-full' : 'h-32'
-                    } w-full object-cover transition-transform duration-300 group-hover:scale-105`}
-                  />
-                  <div className="absolute bottom-0 right-0 p-2">
-                    <StatusBadge status={projectData.project.status} />
-                  </div>
-                  {projectData.metadata.companyDetails?.verifiedDocument && (
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                        Verified Company
-                      </Badge>
+        {!isLoading && !error && (
+          <motion.div variants={itemVariants} className={`grid ${
+            viewMode === 'grid' 
+              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
+              : 'grid-cols-1'
+          } gap-4`}>
+            {filteredProjects.map((projectData) => (
+              <Link href={`/projects/${projectData.project.index}`} key={projectData.project.index}>
+                <Card className={`flex ${
+                  viewMode === 'list' ? 'flex-row' : 'flex-col'
+                } rounded-xl overflow-hidden bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:ring-2 hover:ring-purple-500 dark:hover:ring-purple-400 transition-all duration-200 h-full group`}>
+                  <div className={`relative ${
+                    viewMode === 'list' ? 'w-1/3' : 'w-full'
+                  }`}>
+                    <Image 
+                      src={projectData.metadata.projectImage || "/api/placeholder/400/200"} 
+                      width={400} 
+                      height={200} 
+                      alt={projectData.project.title}
+                      className={`${
+                        viewMode === 'list' ? 'h-full' : 'h-32'
+                      } w-full object-cover transition-transform duration-300 group-hover:scale-105`}
+                    />
+                    <div className="absolute bottom-0 right-0 p-2">
+                      <StatusBadge status={projectData.project.status} />
                     </div>
-                  )}
-                </div>
-                
-                <CardContent className={`p-4 flex-grow flex flex-col ${
-                  viewMode === 'list' ? 'w-2/3' : ''
-                }`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                      {projectData.project.title}
-                    </h3>
-                    <div className="text-purple-600 dark:text-purple-400 font-bold whitespace-nowrap">
-                      {formatCurrency(projectData.project.daily_rate)}/day
-                    </div>
-                  </div>
-                  
-                  <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-                    {projectData.metadata.description}
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {projectData.metadata.requiredSkills.slice(0, 2).map((skill, idx) => (
-                      <Badge key={idx} className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {projectData.metadata.requiredSkills.length > 2 && (
-                      <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                        +{projectData.metadata.requiredSkills.length - 2} more
-                      </Badge>
+                    {projectData.metadata.companyDetails?.verifiedDocument && (
+                      <div className="absolute top-2 left-2">
+                        <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                          Verified Company
+                        </Badge>
+                      </div>
                     )}
                   </div>
                   
-                  <div className="mt-auto">
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} className="text-purple-500" />
-                        <span>{projectData.project.duration_days} days</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users size={14} className="text-purple-500" />
-                        <span>{projectData.project.labour_count}/{projectData.project.max_labourers}</span>
+                  <CardContent className={`p-4 flex-grow flex flex-col ${
+                    viewMode === 'list' ? 'w-2/3' : ''
+                  }`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        {projectData.project.title}
+                      </h3>
+                      <div className="text-purple-600 dark:text-purple-400 font-bold whitespace-nowrap">
+                        {formatCurrency(projectData.project.daily_rate)}/day
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
-                      <div className="flex items-center gap-2">
-                        <div className="relative w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                          <span className="text-xs font-medium text-purple-800 dark:text-purple-200">
-                            {projectData.metadata.managerName.charAt(0)}
+                    <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                      {projectData.metadata.description}
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {projectData.metadata.requiredSkills.slice(0, 2).map((skill, idx) => (
+                        <Badge key={idx} className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {projectData.metadata.requiredSkills.length > 2 && (
+                        <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                          +{projectData.metadata.requiredSkills.length - 2} more
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="mt-auto">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Calendar size={14} className="text-purple-500" />
+                          <span>{projectData.project.duration_days} days</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users size={14} className="text-purple-500" />
+                          <span>{projectData.project.labour_count}/{projectData.project.max_labourers}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                            <span className="text-xs font-medium text-purple-800 dark:text-purple-200">
+                              {projectData.metadata.managerName.charAt(0)}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
+                            {projectData.metadata.managerName}
                           </span>
                         </div>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
-                          {projectData.metadata.managerName}
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">
+                          {formatRelativeTime(projectData.project.timestamp)}
                         </span>
                       </div>
-                      <span className="text-gray-500 dark:text-gray-400 text-xs">
-                        {formatRelativeTime(projectData.project.timestamp)}
-                      </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </motion.div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </motion.div>
+        )}
         
-        {filteredProjects.length === 0 && (
+        {!isLoading && !error && filteredProjects.length === 0 && (
           <motion.div variants={itemVariants} className="p-12 text-center">
             <div className="mb-4">
               <Search size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
@@ -485,27 +555,23 @@ export default function ProjectsListingPage() {
           </motion.div>
         )}
         
-        {/* Pagination - simplified version */}
-        {filteredProjects.length > 0 && (
+        {/* Load More Button - uses Jotai for pagination */}
+        {!isLoading && !error && filteredProjects.length > 0 && hasMoreProjects && (
           <motion.div variants={itemVariants} className="flex justify-center mt-8">
-            <nav className="flex items-center gap-1">
-              <Button variant="outline" className="px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                Previous
-              </Button>
-              <Button className="px-3 py-2 rounded-md bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 font-medium">
-                1
-              </Button>
-              <Button variant="outline" className="px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                2
-              </Button>
-              <Button variant="outline" className="px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                3
-              </Button>
-              <span className="px-2 text-gray-500 dark:text-gray-400">...</span>
-              <Button variant="outline" className="px-3 py-2 rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                Next
-              </Button>
-            </nav>
+            <Button 
+              onClick={loadMoreProjects}
+              className="px-6 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </div>
+              ) : (
+                'Load More Projects'
+              )}
+            </Button>
           </motion.div>
         )}
       </motion.div>

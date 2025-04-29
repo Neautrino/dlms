@@ -8,27 +8,87 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { MOCK_PROJECTS } from '@/lib/DummyData';
 import { FullProjectData, ProjectStatus } from '@/types/project';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useAtom } from 'jotai';
+import { currentUserAtom } from '@/lib/atoms';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
+  const { publicKey } = useWallet();
   const [project, setProject] = useState<FullProjectData | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentUser] = useAtom(currentUserAtom);
 
   useEffect(() => {
-    const projectId = parseInt(params.id as string);
-    const foundProject = MOCK_PROJECTS.find(p => p.project.index === projectId);
-    setProject(foundProject || null);
+    const fetchProjectDetails = async () => {
+      try {
+        setIsLoading(true);
+        const projectId = parseInt(params.id as string);
+        
+        // Fetch all projects from the API
+        const response = await fetch('/api/projects');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        
+        const projects = await response.json();
+        
+        // Find the project with the matching index
+        const foundProject = projects.find((p: FullProjectData) => p.project.index === projectId);
+        
+        if (!foundProject) {
+          setError('Project not found');
+        } else {
+          setProject(foundProject);
+        }
+      } catch (err) {
+        console.error('Error fetching project details:', err);
+        setError('Failed to load project details. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProjectDetails();
   }, [params.id]);
 
-  if (!project) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="container mx-auto max-w-7xl">
         <div className="text-center py-12">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Loading project details...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !project) {
+    return (
+      <div className="container mx-auto max-w-7xl">
+        <div className="text-center py-12">
+          <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Project not found</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">The project you're looking for doesn't exist or has been removed.</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            {error || "The project you're looking for doesn't exist or has been removed."}
+          </p>
+          <Button 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -238,11 +298,13 @@ export default function ProjectDetailsPage() {
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
                   <span className="text-lg font-medium text-purple-800 dark:text-purple-200">
-                    {project.metadata.managerName.charAt(0)}
+                    <Users size={24} />
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{project.metadata.managerName}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {project.metadata.managerWalletAddress.slice(0, 6)}...{project.metadata.managerWalletAddress.slice(-6)}
+                  </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Rating: {project.metadata.managerRating}/5</p>
                 </div>
               </div>
@@ -264,12 +326,28 @@ export default function ProjectDetailsPage() {
                 </div>
                 <Progress value={(project.project.labour_count / project.project.max_labourers) * 100} />
               </div>
-              <Button 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                onClick={() => setIsApplyFormOpen(true)}
-              >
-                Apply for this Project
-              </Button>
+              {!publicKey ? (
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  disabled
+                >
+                  Connect Wallet to Apply
+                </Button>
+              ) : !currentUser ? (
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  disabled
+                >
+                  Register to Apply
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => setIsApplyFormOpen(true)}
+                >
+                  Apply for this Project
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

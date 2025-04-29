@@ -210,7 +210,10 @@ export default function Registration() {
   // Handler for relevant documents files
   const handleRelevantDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    setFormState({ ...formState, relevantDocuments: files });
+    setFormState({ 
+      ...formState, 
+      relevantDocuments: [...formState.relevantDocuments, ...files]
+    });
   };
 
   // Handle form submission
@@ -1087,26 +1090,69 @@ export default function Registration() {
                     </div>
                   </div>
 
+                  {/* Relevant Documents for Work Details */}
                   <div>
-                    <label htmlFor="userRelevantDocuments" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Relevant Documents</label>
-                    <input
-                      type="file"
-                      id="userRelevantDocuments"
-                      accept="application/pdf,image/*"
-                      multiple
-                      onChange={handleRelevantDocumentsChange}
-                      className={`w-full px-4 py-2 rounded-lg border ${isDarkMode
-                        ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
-                      } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
-                    />
-                    {formState.relevantDocuments && formState.relevantDocuments.length > 0 && (
-                      <div className="mt-1 text-xs text-green-600">
-                        {formState.relevantDocuments.map((file, idx) => (
-                          <div key={idx}>{file.name}</div>
-                        ))}
+                    <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Relevant Documents
+                    </label>
+                    <div className="mt-2">
+                      <div className={`border-2 border-dashed rounded-lg p-6 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                        <div className="flex flex-col items-center justify-center">
+                          <Upload className={`w-8 h-8 mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Upload any relevant documents (resume, certificates, etc.)
+                          </p>
+                          <input
+                            type="file"
+                            multiple
+                            onChange={handleRelevantDocumentsChange}
+                            className="hidden"
+                            id="relevantDocuments"
+                          />
+                          <label
+                            htmlFor="relevantDocuments"
+                            className={`mt-2 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors ${
+                              isDarkMode
+                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-200'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
+                          >
+                            Choose Files
+                          </label>
+                        </div>
+                        {formState.relevantDocuments.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            {formState.relevantDocuments.map((file, index) => (
+                              <div
+                                key={index}
+                                className={`flex items-center justify-between p-2 rounded ${
+                                  isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+                                }`}
+                              >
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  {file.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newFiles = [...formState.relevantDocuments];
+                                    newFiles.splice(index, 1);
+                                    setFormState({ ...formState, relevantDocuments: newFiles });
+                                  }}
+                                  className={`p-1 rounded-full ${
+                                    isDarkMode
+                                      ? 'hover:bg-gray-700 text-gray-400'
+                                      : 'hover:bg-gray-200 text-gray-500'
+                                  }`}
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1214,6 +1260,71 @@ export default function Registration() {
                       placeholder="Enter years of management experience"
                       required
                     />
+                  </div>
+
+                  {/* Relevant Documents for Company Details */}
+                  <div>
+                    <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Company Documents
+                    </label>
+                    <div className="mt-2">
+                      <div className={`border-2 border-dashed rounded-lg p-6 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                        <div className="flex flex-col items-center justify-center">
+                          <Upload className={`w-8 h-8 mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Upload any company documents (business license, tax documents, etc.)
+                          </p>
+                          <input
+                            type="file"
+                            multiple
+                            onChange={handleRelevantDocumentsChange}
+                            className="hidden"
+                            id="companyDocuments"
+                          />
+                          <label
+                            htmlFor="companyDocuments"
+                            className={`mt-2 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors ${
+                              isDarkMode
+                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-200'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
+                          >
+                            Choose Files
+                          </label>
+                        </div>
+                        {formState.relevantDocuments.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            {formState.relevantDocuments.map((file, index) => (
+                              <div
+                                key={index}
+                                className={`flex items-center justify-between p-2 rounded ${
+                                  isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+                                }`}
+                              >
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                  {file.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newFiles = [...formState.relevantDocuments];
+                                    newFiles.splice(index, 1);
+                                    setFormState({ ...formState, relevantDocuments: newFiles });
+                                  }}
+                                  className={`p-1 rounded-full ${
+                                    isDarkMode
+                                      ? 'hover:bg-gray-700 text-gray-400'
+                                      : 'hover:bg-gray-200 text-gray-500'
+                                  }`}
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
