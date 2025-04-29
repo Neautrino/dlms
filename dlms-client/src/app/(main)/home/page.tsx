@@ -6,6 +6,7 @@ import '@solana/wallet-adapter-react-ui/styles.css'; // Important for button sty
 import { useEffect, useState } from 'react';
 import RegistrationPage from '@/components/pages/RegistrationPage';
 import UserDashboard from '@/components/pages/UserDashboard';
+import LoadingPage from '@/components/pages/LoadingPage';
 import { useAtom } from 'jotai';
 import { currentUserAtom } from '@/lib/atoms';
 import { FullUserData } from '@/types/user';
@@ -16,6 +17,10 @@ function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
   const [user, setUser] = useAtom(currentUserAtom);
+  console.log("user", user);
+  console.log("isRegistered", isRegistered);
+  console.log("connected", connected);
+  console.log("publicKey", publicKey);
 
   useEffect(() => {
     const checkUserRegistration = async () => {
@@ -31,6 +36,8 @@ function Page() {
         return;
       }
 
+      setIsLoading(true); // Ensure loading state is set before fetching
+      console.log("Fetching user data...");
       try {
         const response = await fetch('/api/get-user-data', {
           method: 'POST',
@@ -43,10 +50,13 @@ function Page() {
         });
 
         const data = await response.json();
-        setIsRegistered(data.exists);
         
         if (data.exists && data.user) {
+          console.log("User data:", data.user);
           setUser(data.user);
+          setIsRegistered(true);
+        } else {
+          setIsRegistered(false);
         }
       } catch (error) {
         console.error('Error checking user registration:', error);
@@ -67,7 +77,6 @@ function Page() {
         <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-md w-full relative z-10 border border-white/10">
           <h2 className="text-2xl font-bold mb-2 text-white">Connect Your Wallet</h2>
           <p className="mb-6 text-gray-300 text-center">To continue, please connect your Solana wallet to DLabor.</p>
-          {/* Use WalletMultiButton to let user connect */}
           <WalletMultiButton className="!bg-gradient-to-r from-indigo-500 to-purple-600 !text-white !font-semibold !text-lg !rounded-xl !shadow-lg hover:scale-105 transition-transform px-8 py-3" />
         </div>
       </div>
@@ -75,18 +84,18 @@ function Page() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
-  if (!user) {
+  if (user && isRegistered) {
+    return <UserDashboard userData={user} />;
+  }
+
+  if (!user && !isRegistered) {
     return <RegistrationPage />;
   }
 
-  return <UserDashboard userData={user} />;
+  return <LoadingPage />;
   // return <UserDashboard userData={MOCK_USERS[0]} />;
 }
 

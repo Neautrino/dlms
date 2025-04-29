@@ -3,13 +3,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { atom, useAtom } from 'jotai';
-import { UserRole, UserAccount, UserMetadata, LaborMetadata, ManagerMetadata } from '@/types/user';
+import { UserRole, UserAccount, UserMetadata, LaborMetadata, ManagerMetadata, FullUserData } from '@/types/user';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Upload, X, Plus, Check, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
 import { connection } from '@/utils/program';
+import bs58 from 'bs58';
+import { currentUserAtom } from '@/lib/atoms';
 
 // Single atom for all form state
 const formStateAtom = atom({
@@ -63,6 +65,7 @@ export default function Registration() {
     description: '',
     duration: ''
   });
+  const [user, setUser] = useAtom(currentUserAtom);
 
   // Theme integration
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -371,20 +374,25 @@ export default function Registration() {
         throw new Error(errorData.error || errorData.message || 'Registration failed');
       }
 
-      const { success, lastValidBlockHeight, serializedTransaction} = await response.json();
+      const { success, lastValidBlockHeight, blockhash, serializedTransaction, metadataUrl, verificationDocumentsUrl, relevantDocumentsUrl } = await response.json();
 
       if (!success) {
         throw new Error('Registration failed');
       }
 
-      const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
-      transaction.recentBlockhash = lastValidBlockHeight;
+      // Decode the base58 transaction
+      const transaction = Transaction.from(bs58.decode(serializedTransaction));
+      transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
 
       // Sign the transaction with the user's wallet
       if (!signTransaction) {
         throw new Error("Wallet does not support transaction signing");
       }
+
+      console.log('Signing transaction...');
+      console.log(transaction);
+      console.log(typeof transaction);
       const signedTransaction = await signTransaction(transaction);
 
       // Send the signed transaction to the network
@@ -395,8 +403,68 @@ export default function Registration() {
 
       console.log('Transaction sent and confirmed:', txid);
 
-      // Registration success - redirect to dashboard
-      router.push(formState.role === UserRole.Labour ? '/labor-dashboard' : '/manager-dashboard');
+      // Update user state with the registration data
+      const userData: FullUserData = {
+        account: {
+          publicKey: publicKey.toString(),
+          authority: publicKey.toString(),
+          name: formState.name,
+          metadata_uri: metadataUrl,
+          active: true,
+          verified: false,
+          rating: 0,
+          rating_count: 0,
+          timestamp: Math.floor(Date.now() / 1000),
+          index: 0,
+          role: formState.role,
+          spam: false
+        },
+        metadata: formState.role === UserRole.Labour ? {
+          name: formState.name,
+          bio: formState.bio,
+          profileImage: profileImage || undefined,
+          gender: formState.gender,
+          dateOfBirth: new Date(formState.dateOfBirth),
+          languages: formState.languages,
+          city: formState.city,
+          state: formState.state,
+          postalCode: formState.postalCode,
+          country: formState.country,
+          verificationDocuments: verificationDocumentsUrl,
+          experience: formState.experience,
+          skillsets: formState.skills,
+          certifications: formState.certifications,
+          workHistory: formState.workHistory,
+          relevantDocuments: relevantDocumentsUrl
+        } : {
+          name: formState.name,
+          bio: formState.bio,
+          profileImage: profileImage || undefined,
+          gender: formState.gender,
+          dateOfBirth: new Date(formState.dateOfBirth),
+          languages: formState.languages,
+          city: formState.city,
+          state: formState.state,
+          postalCode: formState.postalCode,
+          country: formState.country,
+          verificationDocuments: verificationDocumentsUrl,
+          companyDetails: {
+            company: formState.companyDetails.company,
+            industry: formState.companyDetails.industry,
+            founded: formState.companyDetails.founded,
+            location: formState.companyDetails.location,
+            industryFocus: formState.companyDetails.industryFocus
+          },
+          managementExperience: formState.managementExperience,
+          relevantDocuments: relevantDocumentsUrl
+        }
+      };
+
+      // Update the user state
+      setUser(userData);
+
+      // Redirect to home page
+      router.push('/home');
     } catch (error) {
       console.error('Registration error:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Registration failed');

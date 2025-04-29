@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 			.registerUser(
 				name,
 				metadataUrl,
-				{ labour: {}}
+				{ manager: {}}
 			)
 			.accounts({
 				systemState: systemStatePda,
@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
 			success: true,
 			metadataUrl,
 			lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
+			blockhash: blockhashResponse.blockhash,
 			serializedTransaction: base58SerializedTx,
 			metadata
 		}, {

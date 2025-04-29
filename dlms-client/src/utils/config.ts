@@ -3,6 +3,8 @@
 
 import { LaborMetadata, ManagerMetadata, UserMetadata } from "@/types/user";
 import { PinataSDK } from "pinata";
+import FormData from 'form-data';
+import axios from 'axios';
 
 export const pinata = new PinataSDK({
   pinataJwt: process.env.PINATA_JWT,
@@ -14,33 +16,49 @@ export const pinataGateway = process.env.NEXT_PUBLIC_GATEWAY_URL;
 /**
  * Uploads a file to Pinata and returns the IPFS URL
  */
-
 export async function getUrl(cid: string) {
   return `https://${pinataGateway}/ipfs/${cid}`;
 }
 
 export async function uploadFileToPinata(file: File) {
   try {
-    const groups = await pinata.groups.public
-      .list()
-      .name("DLMS Files");
+    // Create a unique filename with timestamp and random string
+    const uniqueFileName = `${file.name}-${Date.now()}`;
 
-    let group = groups.groups.find((g) => g.name === "DLMS Files");
+    // Convert File to Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    if (!group) {
-      group = await pinata.groups.public.create({
-        name: "DLMS Files",
-      });
+    // Create form data
+    const formData = new FormData();
+    formData.append('file', buffer, {
+      filename: uniqueFileName,
+      contentType: file.type,
+    });
+
+    // Add metadata
+    formData.append('pinataMetadata', JSON.stringify({
+      name: uniqueFileName,
+    }));
+
+    // Upload to Pinata
+    const response = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', formData, {
+      headers: {
+        'Authorization': `Bearer ${process.env.PINATA_JWT}`,
+        ...formData.getHeaders(),
+      },
+    });
+
+    if (!response.data || !response.data.IpfsHash) {
+      throw new Error("Upload failed - no IPFS hash returned");
     }
 
-    const upload = await pinata.upload.public
-      .file(file)
-      .name(file.name)
-      .group(group.id);
-
-    return `https://${pinataGateway}/ipfs/${upload.cid}`;
+    return `https://${pinataGateway}/ipfs/${response.data.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading file to Pinata:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
     throw new Error("Failed to upload file");
   }
 }
@@ -50,26 +68,33 @@ export async function uploadFileToPinata(file: File) {
  */
 export async function uploadMetadataToPinata(metadata: any) {
   try {
-    const groups = await pinata.groups.public
-      .list()
-      .name("DLMS Metadata");
+    // Create a unique filename with timestamp
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}-${metadata.name}-metadata.json`;
 
-    let group = groups.groups.find((g) => g.name === "DLMS Metadata");
+    // Upload to Pinata
+    const response = await axios.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+      pinataMetadata: {
+        name: uniqueFileName,
+      },
+      pinataContent: metadata,
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.PINATA_JWT}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    if (!group) {
-      group = await pinata.groups.public.create({
-        name: "DLMS Metadata",
-      });
+    if (!response.data || !response.data.IpfsHash) {
+      throw new Error("Upload failed - no IPFS hash returned");
     }
 
-    const upload = await pinata.upload.public
-      .json(metadata)
-      .name(metadata.name)
-      .group(group.id);
-
-    return `https://${pinataGateway}/ipfs/${upload.cid}`;
+    return `https://${pinataGateway}/ipfs/${response.data.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading metadata to Pinata:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload metadata: ${error.message}`);
+    }
     throw new Error("Failed to upload metadata");
   }
 }

@@ -1,4 +1,4 @@
-import { program } from "@/lib/program";
+import { program } from "@/utils/program";
 import { UserAccount, UserRole } from "@/types/user";
 import { NextResponse } from "next/server";
 

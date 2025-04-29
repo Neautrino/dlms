@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         exists: true, 
         message: "User data fetched successfully", 
-        data: fullUserData 
+        user: fullUserData 
       });
       
     } catch (error: any) {
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ 
           exists: false, 
           message: "User does not exist", 
-          data: null 
+          user: null 
         });
       }
       throw error; // Re-throw other errors
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
         error: 'Failed to fetch user data', 
         exists: false, 
         message: "Failed to fetch user data", 
-        data: null 
+        user: null 
       },
       { status: 500 }
     );
