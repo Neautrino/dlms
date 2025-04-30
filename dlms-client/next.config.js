@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.unsplash.com'],
+    domains: [
+      'olive-hidden-lungfish-156.mypinata.cloud',
+      'gateway.pinata.cloud',
+      'ipfs.io',
+      'cloudflare-ipfs.com',
+      'dweb.link'
+    ],
   },
 }
 

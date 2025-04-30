@@ -28,7 +28,7 @@ const formStateAtom = atom({
   city: '',
   state: '',
   postalCode: '',
-  country: '',
+  country: 'India',
   verificationDocuments: null as File | null,
   relevantDocuments: [] as File[],
   
@@ -48,6 +48,46 @@ const formStateAtom = atom({
   },
   managementExperience: undefined as number | undefined,
 });
+
+// List of Indian states
+const indianStates = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Andaman and Nicobar Islands',
+  'Chandigarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Jammu and Kashmir',
+  'Ladakh',
+  'Lakshadweep',
+  'Puducherry'
+];
 
 // Registration component
 export default function Registration() {
@@ -737,10 +777,9 @@ export default function Registration() {
 
                 <div>
                   <label htmlFor="userState" className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    State/Province
+                    State
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="userState"
                     value={formState.state}
                     onChange={(e) => setFormState({ ...formState, state: e.target.value })}
@@ -748,9 +787,13 @@ export default function Registration() {
                         ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
                         : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                       } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
-                    placeholder="Enter your state"
                     required
-                  />
+                  >
+                    <option value="">Select state</option>
+                    {indianStates.map((state) => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -781,13 +824,11 @@ export default function Registration() {
                     type="text"
                     id="userCountry"
                     value={formState.country}
-                    onChange={(e) => setFormState({ ...formState, country: e.target.value })}
+                    disabled
                     className={`w-full px-4 py-2 rounded-lg border ${isDarkMode
-                        ? 'bg-gray-900 border-gray-700 text-white focus:border-indigo-500'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
-                      } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
-                    placeholder="Enter your country"
-                    required
+                        ? 'bg-gray-900 border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   />
                 </div>
               </div>
