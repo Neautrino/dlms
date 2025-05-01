@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { currentUserAtom } from '@/lib/atoms';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const { publicKey } = useWallet();
   const [project, setProject] = useState<FullProjectData | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
@@ -302,9 +303,12 @@ export default function ProjectDetailsPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <button 
+                    onClick={() => router.push(`/users/${project.metadata.managerWalletAddress}`)}
+                    className="font-medium text-gray-900 dark:text-white hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                  >
                     {project.metadata.managerWalletAddress.slice(0, 6)}...{project.metadata.managerWalletAddress.slice(-6)}
-                  </p>
+                  </button>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Rating: {project.metadata.managerRating}/5</p>
                 </div>
               </div>

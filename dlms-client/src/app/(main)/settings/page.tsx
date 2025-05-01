@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { userAtom } from '@/lib/atoms/userAtom';
+import { userAtom } from '@/lib/atoms';
 import { MOCK_USERS } from '@/lib/DummyData';
 import { FullUserData, UserRole, UserAccount, UserMetadata, LaborMetadata } from '@/types/user';
-import { UserProfile } from '@/lib/atoms/userAtom';
 
 interface SettingsState {
   userData: FullUserData;
@@ -34,7 +33,14 @@ interface SettingsState {
 
 type Section = 'profile' | 'notifications' | 'privacy';
 
-const convertUserProfileToFullUserData = (profile: UserProfile): FullUserData => {
+const convertUserProfileToFullUserData = (profile: {
+  walletAddress: string;
+  name: string;
+  bio: string;
+  profileImage: string;
+  skills: string[];
+  experience: string;
+}): FullUserData => {
   return {
     account: {
       publicKey: profile.walletAddress,
