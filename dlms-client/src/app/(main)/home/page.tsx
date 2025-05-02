@@ -8,17 +8,17 @@ import RegistrationPage from '@/components/pages/RegistrationPage';
 import UserDashboard from '@/components/pages/UserDashboard';
 import LoadingPage from '@/components/pages/LoadingPage';
 import { useAtom } from 'jotai';
-import { currentUserAtom } from '@/lib/atoms';
+import { currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
 import { FullUserData } from '@/types/user';
 import { MOCK_USERS } from '@/lib/DummyData';
 
 function Page() {
   const { connected, publicKey } = useWallet();
   const [isLoading, setIsLoading] = useState(true);
-  const [isRegistered, setIsRegistered] = useState(false);
   const [user, setUser] = useAtom(currentUserAtom);
+  const [registrationStatus, setRegistrationStatus] = useAtom(userRegistrationStatusAtom);
   console.log("user", user);
-  console.log("isRegistered", isRegistered);
+  console.log("registrationStatus", registrationStatus);
   console.log("connected", connected);
   console.log("publicKey", publicKey);
 
@@ -26,17 +26,21 @@ function Page() {
     const checkUserRegistration = async () => {
       if (!publicKey) {
         setIsLoading(false);
+        setRegistrationStatus({ isRegistered: false, role: null });
         return;
       }
 
       // If we already have user data in the atom, use it
       if (user) {
-        setIsRegistered(true);
+        setRegistrationStatus({
+          isRegistered: true,
+          role: user.account.role
+        });
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true); // Ensure loading state is set before fetching
+      setIsLoading(true);
       console.log("Fetching user data...");
       try {
         const response = await fetch('/api/get-user-data', {
@@ -54,20 +58,29 @@ function Page() {
         if (data.exists && data.user) {
           console.log("User data:", data.user);
           setUser(data.user);
-          setIsRegistered(true);
+          setRegistrationStatus({
+            isRegistered: true,
+            role: data.user.account.role
+          });
         } else {
-          setIsRegistered(false);
+          setRegistrationStatus({
+            isRegistered: false,
+            role: null
+          });
         }
       } catch (error) {
         console.error('Error checking user registration:', error);
-        setIsRegistered(false);
+        setRegistrationStatus({
+          isRegistered: false,
+          role: null
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     checkUserRegistration();
-  }, [publicKey, setUser, user]);
+  }, [publicKey, setUser, setRegistrationStatus, user]);
 
   if (!connected) {
     return (
@@ -87,15 +100,11 @@ function Page() {
     return <LoadingPage />;
   }
 
-  if (user && isRegistered) {
-    return <UserDashboard userData={user} />;
+  if (registrationStatus.isRegistered) {
+    return <UserDashboard userData={user!} />;
   }
 
-  if (!user && !isRegistered) {
-    return <RegistrationPage />;
-  }
-
-  return <LoadingPage />;
+  return <RegistrationPage />;
   // return <UserDashboard userData={MOCK_USERS[0]} />;
 }
 

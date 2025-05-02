@@ -59,3 +59,11 @@ export const hasMoreProjectsAtom = atom(
     return endIndex < allProjects.length;
   }
 );
+
+export const userRegistrationStatusAtom = atom<{
+  isRegistered: boolean;
+  role: 'manager' | 'labour' | null;
+}>({
+  isRegistered: false,
+  role: null
+});

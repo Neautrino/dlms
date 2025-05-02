@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Clock, Users, ChevronDown, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Grid, List } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, Users, ChevronDown, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Grid, List, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FullProjectData, ProjectStatus } from '@/types/project';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAtom } from 'jotai';
-import { allProjectsAtom, paginatedProjectsAtom, currentPageAtom, hasMoreProjectsAtom } from '@/lib/atoms';
+import { allProjectsAtom, paginatedProjectsAtom, currentPageAtom, hasMoreProjectsAtom, currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
 
 // Animation variants
 const containerVariants = {
@@ -37,6 +38,7 @@ const itemVariants = {
 };
 
 export default function ProjectsListingPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed' | 'cancelled'>('all');
@@ -48,12 +50,15 @@ export default function ProjectsListingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   
   // Jotai atoms
   const [allProjects, setAllProjects] = useAtom(allProjectsAtom);
   const [paginatedProjects] = useAtom(paginatedProjectsAtom);
   const [currentPage, setCurrentPage] = useAtom(currentPageAtom);
   const [hasMoreProjects] = useAtom(hasMoreProjectsAtom);
+  const [currentUser] = useAtom(currentUserAtom);
+  const [registrationStatus] = useAtom(userRegistrationStatusAtom);
   
   // Local state for filtered projects
   const [filteredProjects, setFilteredProjects] = useState<FullProjectData[]>([]);
@@ -247,18 +252,31 @@ export default function ProjectsListingPage() {
                     className="pl-10 pr-4 py-3 w-full border-0 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
-                >
-                  <Filter size={18} />
-                  <span>Filters</span>
-                  <ChevronDown 
-                    size={18} 
-                    className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} 
-                  />
-                </motion.button>
+                <div className="flex gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm ring-1 ring-gray-300 dark:ring-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  >
+                    <Filter size={18} />
+                    <span>Filters</span>
+                    <ChevronDown 
+                      size={18} 
+                      className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} 
+                    />
+                  </motion.button>
+                  
+                  {registrationStatus.role === 'manager' && (
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => router.push('/projects/create-project')}
+                      className="flex items-center cursor-pointer gap-2 px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-colors"
+                    >
+                      <Plus size={18} />
+                      <span>Create Project</span>
+                    </motion.button>
+                  )}
+                </div>
               </div>
               
               {/* Expandable filters */}
