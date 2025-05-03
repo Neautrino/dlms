@@ -28,17 +28,8 @@ export interface ProjectMetadata {
     location: string;
     requiredSkills: string[];
     projectImage?: string;
-    company: string;
-    companyDetails: {
-        name: string;
-        description: string;
-        industryFocus: string[];
-        verifiedDocument: string;
-    }
     category: string;
-    managerName: string;
-    managerWalletAddress: string;
-    managerRating: number;
+    walletAddress: string;
     startDate?: string;
     required_labourer_count: number;
     application_deadline?: string;

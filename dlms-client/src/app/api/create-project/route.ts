@@ -29,20 +29,14 @@ export async function POST(request: NextRequest) {
     const projectImage = body.get("projectImage") as File | null;
     
     // Get additional project details
-    const location = body.get("location") as string;
+    const country = body.get("country") as string;
+    const state = body.get("state") as string;
     const requiredSkills = body.get("requiredSkills") as string;
     const company = body.get("company") as string;
     const category = body.get("category") as string;
-    const managerName = body.get("managerName") as string;
-    const managerRating = body.get("managerRating") as string;
+    const managerAddress = body.get("managerAddress") as string; 
     const startDate = body.get("startDate") as string | null;
-    const applicationDeadline = body.get("applicationDeadline") as string | null;
-
-    // Get company details
-    const companyName = body.get("companyName") as string;
-    const companyDescription = body.get("companyDescription") as string;
-    const companyIndustryFocus = body.get("companyIndustryFocus") as string;
-    const companyVerificationDoc = body.get("companyVerificationDoc") as File | null;
+    const applicationDeadline = body.get("applicationDeadline") as string | null
 
     // Get document descriptions
     const relevantDocDesc = body.get("relevantDocsDescription") as string | null;
@@ -61,8 +55,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!title || !dailyRate || !durationDays || !maxLabourers || !description || !location || 
-        !company || !category || !managerName || !companyName || !companyDescription) {
+    if (!title || !dailyRate || !durationDays || !maxLabourers || !description || 
+        !country || !state || !company || !category || !walletAddress) {
       return Response.json({
         success: false,
         error: "Missing required fields"
@@ -75,7 +69,6 @@ export async function POST(request: NextRequest) {
     const dailyRateNumber = parseFloat(dailyRate);
     const durationDaysNumber = parseInt(durationDays);
     const maxLabourersNumber = parseInt(maxLabourers);
-    const managerRatingNumber = parseFloat(managerRating || "0");
 
     if (isNaN(dailyRateNumber) || dailyRateNumber <= 0) {
       return Response.json({
@@ -105,11 +98,7 @@ export async function POST(request: NextRequest) {
       projectImageUrl = await uploadFileToPinata(projectImage);
     }
 
-    // Upload company verification document if provided
-    let companyVerificationDocUrl = "";
-    if (companyVerificationDoc && companyVerificationDoc instanceof File && companyVerificationDoc.size > 0) {
-      companyVerificationDocUrl = await uploadFileToPinata(companyVerificationDoc);
-    }
+
 
 
     // Upload multiple relevant documents
@@ -120,28 +109,15 @@ export async function POST(request: NextRequest) {
 		}
 
 
-    // Parse industry focus
-    const industryFocusArray = companyIndustryFocus 
-      ? companyIndustryFocus.split(",").map(item => item.trim()).filter(Boolean)
-      : [];
 
     // Prepare metadata object according to the provided interface
     const metadata: ProjectMetadata = {
       title,
       description,
-      location,
+      location: `${country}, ${state}`,
       requiredSkills: requiredSkills ? requiredSkills.split(",").map(item => item.trim()).filter(Boolean) : [],
-      company,
-      companyDetails: {
-        name: companyName,
-        description: companyDescription,
-        industryFocus: industryFocusArray,
-        verifiedDocument: companyVerificationDocUrl
-      },
-      category,
-      managerName,
-      managerWalletAddress: walletAddress,
-      managerRating: managerRatingNumber,
+      category, 
+      walletAddress,
       required_labourer_count: maxLabourersNumber,
       ...(projectImageUrl && { projectImage: projectImageUrl }),
       ...(startDate && { startDate }),
@@ -185,7 +161,6 @@ export async function POST(request: NextRequest) {
       [Buffer.from("Escrow"), projectPda.toBuffer()],
       program.programId
     );
-
     // Get manager's token account
     const tokenAccounts = await program.provider.connection.getTokenAccountsByOwner(
       currentWallet,
@@ -195,7 +170,7 @@ export async function POST(request: NextRequest) {
     if (tokenAccounts.value.length === 0) {
       return Response.json({
         success: false,
-        error: "No token account found for the project token"
+        error: "No token account found for the project owner"
       }, { status: 400 });
     }
 

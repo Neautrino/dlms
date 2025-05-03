@@ -56,6 +56,26 @@ import {
         });
       }
   
+      // Verify project is in Open status
+      if (projectAccount.status !== ProjectStatus.Open) {
+        return Response.json({
+          success: false,
+          error: "Project is not in Open status"
+        }, {
+          status: 400,
+        });
+      }
+  
+      // Verify project is not full
+      if (projectAccount.labourCount >= projectAccount.maxLabourers) {
+        return Response.json({
+          success: false,
+          error: "Project has reached maximum number of labourers"
+        }, {
+          status: 400,
+        });
+      }
+  
       // Calculate the assignment PDA
       const [assignmentPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("Assignment"), labourAccountPublicKey.toBuffer(), projectPublicKey.toBuffer()],

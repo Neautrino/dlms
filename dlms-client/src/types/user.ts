@@ -57,7 +57,8 @@ export interface ManagerMetadata {
   country?: string;
   verificationDocuments?: string;
   companyDetails?: {
-    company?: string;
+    companyName?: string;
+    companyDescription?: string;
     industry?: string;
     founded?: number;
     location?: string;

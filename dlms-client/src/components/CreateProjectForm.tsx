@@ -9,8 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   X, Loader2, Plus, Upload, Briefcase, DollarSign, Calendar, Users, 
-  MapPin, Building2, FileText, Tag, ChevronRight, ChevronLeft, CheckCircle
+  MapPin, Building2, FileText, Tag, ChevronRight, ChevronLeft, CheckCircle, Globe
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
+
+const COUNTRIES = [
+  "India"
+];
 
 export default function CreateProjectForm({ onClose }: { onClose: () => void }) {
   const { publicKey } = useWallet();
@@ -25,20 +39,16 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
     dailyRate: string;
     durationDays: string;
     maxLabourers: string;
-    location: string;
+    country: string;
+    state: string;
     requiredSkills: string;
     company: string;
     category: string;
-    managerName: string;
-    managerRating: string;
+    managerAddress: string;
     startDate: string;
     applicationDeadline: string;
-    companyName: string;
-    companyDescription: string;
-    companyIndustryFocus: string;
     relevantDocsDescription: string;
     projectImage: File | null;
-    companyVerificationDoc: File | null;
     relevantDocuments: File[];
   }>({
     title: '',
@@ -46,20 +56,16 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
     dailyRate: '',
     durationDays: '',
     maxLabourers: '',
-    location: '',
+    country: '',
+    state: '',
     requiredSkills: '',
     company: '',
     category: '',
-    managerName: '',
-    managerRating: '',
+    managerAddress: '',
     startDate: '',
     applicationDeadline: '',
-    companyName: '',
-    companyDescription: '',
-    companyIndustryFocus: '',
     relevantDocsDescription: '',
     projectImage: null,
-    companyVerificationDoc: null,
     relevantDocuments: []
   });
 
@@ -79,20 +85,19 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
         case 1:
           setCompletedSteps(prev => ({
             ...prev,
-            1: !!formData.title && !!formData.description
+            1: !!formData.title && !!formData.description && !!formData.country && !!formData.state
           }));
           break;
         case 2:
           setCompletedSteps(prev => ({
             ...prev,
-            2: !!formData.dailyRate && !!formData.durationDays && 
-                !!formData.maxLabourers && !!formData.location
+            2: !!formData.dailyRate && !!formData.durationDays && !!formData.maxLabourers
           }));
           break;
         case 3:
           setCompletedSteps(prev => ({
             ...prev,
-            3: !!formData.company && !!formData.requiredSkills
+            3: !!formData.company && !!formData.requiredSkills && !!formData.category
           }));
           break;
         case 4:
@@ -313,6 +318,53 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           A detailed description helps attract qualified labourers
                         </p>
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <Globe className="w-4 h-4 text-indigo-500" />
+                            Country
+                          </label>
+                          <Select
+                            value={formData.country}
+                            onValueChange={(value) => setFormData({ ...formData, country: value })}
+                          >
+                            <SelectTrigger className={`w-full ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                              <SelectValue placeholder="Select Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {COUNTRIES.map((country) => (
+                                <SelectItem key={country} value={country}>
+                                  {country}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <MapPin className="w-4 h-4 text-indigo-500" />
+                            State
+                          </label>
+                          <Select
+                            value={formData.state}
+                            onValueChange={(value) => setFormData({ ...formData, state: value })}
+                            disabled={formData.country !== "India"}
+                          >
+                            <SelectTrigger className={`w-full ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}>
+                              <SelectValue placeholder="Select State" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {INDIAN_STATES.map((state) => (
+                                <SelectItem key={state} value={state}>
+                                  {state}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -332,7 +384,7 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           Daily Rate
                         </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
                           <Input
                             type="number"
                             value={formData.dailyRate}
@@ -344,6 +396,9 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                             className={`pl-8 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                           />
                         </div>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Enter the daily payment rate for labourers
+                        </p>
                       </div>
                       
                       <div className="space-y-2">
@@ -360,6 +415,9 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           min="1"
                           className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Estimated duration of the project
+                        </p>
                       </div>
                       
                       <div className="space-y-2">
@@ -377,21 +435,25 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           max="255"
                           className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Maximum number of labourers needed
+                        </p>
                       </div>
                       
                       <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm font-medium">
-                          <MapPin className="w-4 h-4 text-indigo-500" />
-                          Location
+                          <Calendar className="w-4 h-4 text-indigo-500" />
+                          Start Date
                         </label>
                         <Input
-                          type="text"
-                          value={formData.location}
-                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          placeholder="City, State or full address"
-                          required
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                           className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Expected project start date
+                        </p>
                       </div>
                       
                       <div className="space-y-2 md:col-span-2">
@@ -405,6 +467,9 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           onChange={(e) => setFormData({ ...formData, applicationDeadline: e.target.value })}
                           className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Last date for labourers to apply
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -433,17 +498,19 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                           className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <label className="flex items-center gap-2 text-sm font-medium">
-                          <FileText className="w-4 h-4 text-indigo-500" />
-                          Company Description
+                          <Tag className="w-4 h-4 text-indigo-500" />
+                          Category
                         </label>
-                        <Textarea
-                          value={formData.companyDescription}
-                          onChange={(e) => setFormData({ ...formData, companyDescription: e.target.value })}
-                          placeholder="Brief description of your company"
-                          className={`min-h-[100px] ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
+                        <Input
+                          type="text"
+                          value={formData.category}
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          placeholder="Project category"
+                          required
+                          className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
                         />
                       </div>
                       
@@ -477,6 +544,19 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                     </div>
                     
                     <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm font-medium">
+                          <FileText className="w-4 h-4 text-indigo-500" />
+                          Document Description
+                        </label>
+                        <Textarea
+                          value={formData.relevantDocsDescription}
+                          onChange={(e) => setFormData({ ...formData, relevantDocsDescription: e.target.value })}
+                          placeholder="Describe the purpose of the documents you're uploading"
+                          className={`min-h-[100px] ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'}`}
+                        />
+                      </div>
+
                       <div className={`p-6 rounded-xl border-2 border-dashed ${
                         isDarkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'
                       }`}>
@@ -494,38 +574,6 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
                             type="file"
                             accept="image/*"
                             onChange={(e) => handleFileChange(e, 'projectImage')}
-                            className="hidden"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className={`mt-2 ${
-                              isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-50'
-                            }`}
-                          >
-                            Select File
-                          </Button>
-                        </label>
-                      </div>
-                      
-                      <div className={`p-6 rounded-xl border-2 border-dashed ${
-                        isDarkMode ? 'border-gray-600 bg-gray-700/30' : 'border-gray-200 bg-gray-50'
-                      }`}>
-                        <label className="flex flex-col items-center gap-3 cursor-pointer">
-                          <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-                            <FileText className="w-6 h-6" />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-medium">Company Verification Document</p>
-                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {formData.companyVerificationDoc ? (formData.companyVerificationDoc as File).name : 'Upload business license or registration'}
-                            </p>
-                          </div>
-                          <Input
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={(e) => handleFileChange(e, 'companyVerificationDoc')}
                             className="hidden"
                           />
                           <Button

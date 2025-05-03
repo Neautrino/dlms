@@ -3,26 +3,33 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2, User, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { FullProjectData, ProjectStatus } from '@/types/project';
+import { ApplicationStatus } from '@/types/application';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
-import { currentUserAtom } from '@/lib/atoms';
+import { currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
+import { useToast } from '@/hooks/use-toast';
+import { Transaction } from '@solana/web3.js';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { publicKey } = useWallet();
+  const [userRegistrationStatus] = useAtom(userRegistrationStatusAtom);
   const [project, setProject] = useState<FullProjectData | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser] = useAtom(currentUserAtom);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -57,6 +64,31 @@ export default function ProjectDetailsPage() {
     
     fetchProjectDetails();
   }, [params.id]);
+
+  // Add new useEffect to fetch applications
+  useEffect(() => {
+    const fetchApplications = async () => {
+      if (!project || !currentUser || userRegistrationStatus.role !== 'manager') return;
+      
+      try {
+        setIsLoadingApplications(true);
+        const response = await fetch(`/api/projects/${project.project.index}/applications`);
+        if (!response.ok) throw new Error('Failed to fetch applications');
+        const data = await response.json();
+        setApplications(data);
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        toast('error', {
+          title: "Error",
+          description: "Failed to load applications"
+        });
+      } finally {
+        setIsLoadingApplications(false);
+      }
+    };
+
+    fetchApplications();
+  }, [project, currentUser, userRegistrationStatus.role, toast]);
 
   // Loading state
   if (isLoading) {
@@ -145,6 +177,52 @@ export default function ProjectDetailsPage() {
         {statusText}
       </span>
     );
+  };
+
+  const handleApproveApplication = async (applicationPda: string, labourAccountPda: string) => {
+    if (!publicKey || !project) return;
+
+    try {
+      const response = await fetch('/api/approve-application', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: publicKey.toString(),
+          applicationPda,
+          projectPda: project.project.publicKey,
+          labourAccountPda
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve application');
+      }
+
+      const { serializedTransaction } = await response.json();
+      
+      // Sign and send transaction
+      const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
+      const signedTx = await window.solana.signTransaction(transaction);
+      const signature = await window.solana.sendRawTransaction(signedTx.serialize());
+      
+      toast('success', {
+        title: "Success",
+        description: "Application approved successfully"
+      });
+      
+      // Refresh applications
+      const appsResponse = await fetch(`/api/projects/${project.project.index}/applications`);
+      const appsData = await appsResponse.json();
+      setApplications(appsData);
+    } catch (error) {
+      console.error('Error approving application:', error);
+      toast('error', {
+        title: "Error",
+        description: "Failed to approve application"
+      });
+    }
   };
 
   return (
@@ -330,7 +408,7 @@ export default function ProjectDetailsPage() {
                 </div>
                 <Progress value={(project.project.labour_count / project.project.max_labourers) * 100} />
               </div>
-              {!publicKey ? (
+              {userRegistrationStatus.role !== 'manager' ? null : !publicKey ? (
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                   disabled
@@ -354,6 +432,73 @@ export default function ProjectDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Applications Section - Only visible to managers */}
+          {userRegistrationStatus.role === 'manager' && project && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Applications</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isLoadingApplications ? (
+                  <div className="text-center py-4">
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  </div>
+                ) : applications.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No pending applications</p>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((app) => (
+                      <div key={app.publicKey} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="relative w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                            <User size={20} className="text-purple-800 dark:text-purple-200" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {app.labour.slice(0, 6)}...{app.labour.slice(-6)}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Applied {formatRelativeTime(app.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{app.description}</p>
+                          {app.skills && app.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {app.skills.map((skill: string, idx: number) => (
+                                <Badge key={idx} variant="secondary">{skill}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => handleApproveApplication(app.publicKey, app.labour)}
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => {/* TODO: Implement reject functionality */}}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
