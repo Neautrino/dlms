@@ -114,6 +114,7 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("handleSubmit called");
     setIsSubmitting(true);
     setError(null);
 
@@ -268,7 +269,13 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white border-gray-100'
         }`}>
-          <form onSubmit={currentStep === 4 ? handleSubmit : (e) => e.preventDefault()}>
+          <form onSubmit={(e) => {
+            if (currentStep === 4) {
+              handleSubmit(e);
+            } else {
+              e.preventDefault();
+            }
+          }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
@@ -662,7 +669,11 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
               {currentStep < 4 ? (
                 <Button
                   type="button"
-                  onClick={nextStep}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    nextStep();
+                  }}
                   disabled={!completedSteps[currentStep]}
                   className={`px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white ${
                     !completedSteps[currentStep] ? 'opacity-50 cursor-not-allowed' : ''

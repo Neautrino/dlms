@@ -8,6 +8,7 @@ pub const ESCROW_SEED: &str = "Escrow";
 pub const APPLICATION: &str = "Application";
 pub const ASSIGNMENT: &str = "Assignment";
 pub const WORK_VERIFICATION: &str = "Verify";
+pub const REVIEW: &str = "Review";
 
 // Limits
 pub const MAX_ADMINS: usize = 10;

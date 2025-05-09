@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FullProjectData } from '@/types/project';
+import RateUserPopup from '@/components/RateUserPopup';
 
 export default function UserDetailsPage() {
   const params = useParams();
@@ -26,62 +27,63 @@ export default function UserDetailsPage() {
   const [currentUser] = useAtom(currentUserAtom);
   const [allProjects] = useAtom(allProjectsAtom);
   const [userProjects, setUserProjects] = useState<FullProjectData[]>([]);
+  const [isRatingPopupOpen, setIsRatingPopupOpen] = useState(false);
   
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        setIsLoading(true);
-        const walletAddress = params.walletAddress?.toString() || '';
+  const fetchUserDetails = async () => {
+    try {
+      setIsLoading(true);
+      const walletAddress = params.walletAddress?.toString() || '';
 
-        // First check if the user is the current user
-        if (currentUser && currentUser.account.authority === walletAddress) {
-          setUser(currentUser);
+      // First check if the user is the current user
+      if (currentUser && currentUser.account.authority === walletAddress) {
+        setUser(currentUser); 
+        setIsLoading(false);
+        return;
+      }
+
+      // Then check if the user exists in the allUsers atom
+      if (allUsers) {
+        const foundUser = allUsers.find(u => u.account.authority === walletAddress);
+        if (foundUser) {
+          setUser(foundUser);
           setIsLoading(false);
           return;
         }
-
-        // Then check if the user exists in the allUsers atom
-        if (allUsers) {
-          const foundUser = allUsers.find(u => u.account.authority === walletAddress);
-          if (foundUser) {
-            setUser(foundUser);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // If not found in atoms, fetch from API
-        const response = await fetch('/api/get-user-data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            walletAddress,
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch user details');
-        }
-        
-        const userData = await response.json();
-
-        if (userData.exists && userData.user) {
-          console.log("User data:", userData.user);
-          setUser(userData.user);
-        } else {
-          setError('User not found');
-        }
-      
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching user details:', err);
-        setError('Failed to load user details. Please try again later.');
-        setIsLoading(false);
       }
-    };
+
+      // If not found in atoms, fetch from API
+      const response = await fetch('/api/get-user-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+      
+      const userData = await response.json();
+
+      if (userData.exists && userData.user) {
+        console.log("User data:", userData.user);
+        setUser(userData.user);
+      } else {
+        setError('User not found');
+      }
     
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error fetching user details:', err);
+      setError('Failed to load user details. Please try again later.');
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (params.walletAddress) {
       fetchUserDetails();
     }
@@ -117,6 +119,34 @@ export default function UserDetailsPage() {
   const formatRating = (rating: number, count: number) => {
     const average = count > 0 ? (rating / count / 10).toFixed(1) : '0.0';
     return `${average} (${count} reviews)`;
+  };
+
+  const handleRatingSubmit = async (rating: number, review: string) => {
+    try {
+      const response = await fetch('/api/rate-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: user?.account.authority,
+          rating,
+          review,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit rating');
+      }
+
+      // Refresh user data to show updated rating
+      if (params.walletAddress) {
+        fetchUserDetails();
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      throw error;
+    }
   };
 
   if (isLoading) {
@@ -205,6 +235,19 @@ export default function UserDetailsPage() {
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   <span className="font-medium">{formatRating(user.account.rating, user.account.rating_count)}</span>
                 </div>
+
+                {/* Add Rate Button */}
+                {currentUser && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      onClick={() => setIsRatingPopupOpen(true)}
+                      className="w-full max-w-xs bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      Rate User
+                    </Button>
+                  </div>
+                )}
               </div>
               
               <Separator className="my-4" />
@@ -530,7 +573,7 @@ export default function UserDetailsPage() {
                     {!isLabor && 'companyDetails' in typedUser.metadata && typedUser.metadata.companyDetails ? (
                       <div className="space-y-6">
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                          <h3 className="text-lg font-medium mb-2">{typedUser.metadata.companyDetails.company}</h3>
+                          <h3 className="text-lg font-medium mb-2">{typedUser.metadata.companyDetails.companyName}</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div className="flex items-center">
                               <Briefcase className="h-5 w-5 text-indigo-500 mr-3" />
@@ -590,6 +633,14 @@ export default function UserDetailsPage() {
           </Tabs>
         </div>
       </div>
+
+      {/* Rating Popup */}
+      <RateUserPopup
+        isOpen={isRatingPopupOpen}
+        onClose={() => setIsRatingPopupOpen(false)}
+        userName={user.account.name}
+        onSubmit={handleRatingSubmit}
+      />
     </motion.div>
   );
 }

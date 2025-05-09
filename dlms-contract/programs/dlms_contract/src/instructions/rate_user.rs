@@ -1,12 +1,13 @@
 use anchor_lang::prelude::*;
 use crate::states::*;
+use crate::constants::*;
 use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct RateUser<'info> {
     #[account(
         mut,
-        seeds = [b"user", user_account.authority.key().as_ref()],
+        seeds = [USER_STATE.as_bytes(), user_account.authority.key().as_ref()],
         bump
     )]
     pub user_account: Account<'info, UserAccount>,
@@ -15,7 +16,7 @@ pub struct RateUser<'info> {
         init,
         payer = authority,
         space = 8 + Review::INIT_SPACE,
-        seeds = [b"review", authority.key().as_ref(), user_account.key().as_ref()],
+        seeds = [REVIEW.as_bytes(), authority.key().as_ref(), user_account.key().as_ref()],
         bump
     )]
     pub review: Account<'info, Review>,
@@ -25,7 +26,6 @@ pub struct RateUser<'info> {
 
     pub system_program: Program<'info, System>,
 }
-
 pub fn rate_user(
     ctx: Context<RateUser>,
     rating: u8,

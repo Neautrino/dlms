@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/dlms_contract.json`.
  */
 export type DlmsContract = {
-  "address": "Fm9ozCZNtE94x64Rh5pZv88vVZ8B9rFjjiEArmthiVA",
+  "address": "D3EyaiLex4rCbjeiag5de5YSHmqqzL6H1DmLEsvMy4yG",
   "metadata": {
     "name": "dlmsContract",
     "version": "0.1.0",
