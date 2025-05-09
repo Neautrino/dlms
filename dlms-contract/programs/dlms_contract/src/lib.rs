@@ -114,4 +114,11 @@ pub mod dlms_contract {
     ) -> Result<()> {
         instructions::verify_user(ctx)
     }
+
+    pub fn mint_token(
+        ctx: Context<MintToken>, 
+        amount: u64
+    ) -> Result<()> {
+        instructions::mint_token(ctx, amount)
+    }
 }

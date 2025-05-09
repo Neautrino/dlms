@@ -12,6 +12,7 @@ pub mod verify_work_day;
 pub mod approve_work_day;
 pub mod mark_user_spam;
 pub mod verify_user;
+pub mod mint_token;
 
 pub use create_project::*;
 pub use initialize::*;
@@ -27,3 +28,4 @@ pub use verify_work_day::*;
 pub use approve_work_day::*;
 pub use mark_user_spam::*;
 pub use verify_user::*;
+pub use mint_token::*;
