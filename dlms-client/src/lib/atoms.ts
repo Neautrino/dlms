@@ -67,3 +67,5 @@ export const userRegistrationStatusAtom = atom<{
   isRegistered: false,
   role: null
 });
+
+export const userBalanceAtom = atom<number>(0);

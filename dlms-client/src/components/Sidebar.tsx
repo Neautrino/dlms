@@ -1,13 +1,15 @@
 'use client'
 
 import { motion } from 'framer-motion';
-import { Home, Briefcase, Users, User, Settings, BarChart, Wallet, Bell, LogOut } from 'lucide-react';
+import { Home, Briefcase, Users, User, Settings, BarChart, Wallet, ArrowRightLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ThemeToggle } from './ThemeToggle';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useAtom } from 'jotai';
+import { currentUserAtom, userBalanceAtom } from '@/lib/atoms';
+import { Loader2 } from 'lucide-react';
 
 interface NavigationItem {
   name: string;
@@ -29,12 +31,55 @@ const navigationItems: NavigationItem[] = [
   { name: 'Users', icon: <Users size={20} strokeWidth={2} />, path: '/users' },
   { name: 'Profile', icon: <User size={20} strokeWidth={2} />, path: '/profile' },
   { name: 'Analytics', icon: <BarChart size={20} strokeWidth={2} />, path: '/analytics' },
+  { name: 'Transactions', icon: <ArrowRightLeft size={20} strokeWidth={2} />, path: '/transactions' },
   { name: 'Settings', icon: <Settings size={20} strokeWidth={2} />, path: '/settings' },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+  const { publicKey } = useWallet();
+  const [user] = useAtom(currentUserAtom);
+  const [balance, setBalance] = useAtom(userBalanceAtom);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!publicKey) {
+        setBalance(0);
+        setIsLoadingBalance(false);
+        return;
+      }
+
+      try {
+        setIsLoadingBalance(true);
+        const response = await fetch('/api/get-balance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userPubkey: publicKey.toString(),
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setBalance(data.balance);
+        } else {
+          setBalance(0);
+        }
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+        setBalance(0);
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchBalance();
+  }, [publicKey, setBalance]);
 
   return (
     <motion.div 
@@ -123,14 +168,21 @@ export default function Sidebar() {
         <div className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
           <div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Balance</div>
-            <div className="text-xl font-bold text-purple-700 dark:text-purple-100">1234 DLT</div>
+            {isLoadingBalance ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400" />
+                <span className="text-sm text-gray-500 dark:text-gray-400">Loading...</span>
+              </div>
+            ) : (
+              <div className="text-xl font-bold text-purple-700 dark:text-purple-100">
+                {balance.toLocaleString()} DLT
+              </div>
+            )}
           </div>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Wallet className="text-purple-600 dark:text-purple-400 h-6 w-6" />
           </motion.div>
         </div>
-        
-        
       </div>
     </motion.div>
   );

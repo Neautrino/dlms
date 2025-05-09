@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +11,11 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bell, Wallet, Filter, DollarSign, Search } from 'lucide-react';
+import { Bell, Wallet, Filter, DollarSign, Search, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { useAtom } from 'jotai';
+import { userBalanceAtom } from '@/lib/atoms';
 
 const tags = [
   'Solidity',
@@ -39,6 +40,7 @@ const priceRanges = [
 export default function Navbar() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('');
+  const [balance] = useAtom(userBalanceAtom);
 
   return (
     <motion.nav 
@@ -56,7 +58,7 @@ export default function Navbar() {
             className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-purple-900/20 rounded-full text-purple-700 dark:text-purple-100 shadow-sm hover:shadow-md transition-shadow"
           >
             <Wallet className="w-4 h-4" />
-            <span className="text-sm font-medium">1234 DLT</span>
+            <span className="text-sm font-medium">{balance.toLocaleString()} DLT</span>
           </motion.div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

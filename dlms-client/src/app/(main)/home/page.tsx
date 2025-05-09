@@ -9,8 +9,6 @@ import UserDashboard from '@/components/pages/UserDashboard';
 import LoadingPage from '@/components/pages/LoadingPage';
 import { useAtom } from 'jotai';
 import { currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
-import { FullUserData } from '@/types/user';
-import { MOCK_USERS } from '@/lib/DummyData';
 
 function Page() {
   const { connected, publicKey } = useWallet();
