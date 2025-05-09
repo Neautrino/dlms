@@ -1,12 +1,5 @@
-import {
-    Connection,
-    PublicKey,
-    Transaction,
-    SystemProgram,
-    sendAndConfirmTransaction,
-    TransactionInstruction
-} from '@solana/web3.js';
-import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { connection, program } from "@/utils/program";
 import { BN } from "@coral-xyz/anchor";
 
@@ -65,6 +58,7 @@ export async function POST(req: Request) {
             .accounts({
                 systemState: systemStatePda,
                 mint: new PublicKey(mint),
+                // @ts-ignore
                 mintAuthority: mintAuthorityPDA,
                 to: userATA,
                 tokenProgram: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') // SPL Token program ID
@@ -96,7 +90,7 @@ export async function POST(req: Request) {
         console.error('Error creating mint transaction:', error);
         return new Response(JSON.stringify({
             error: 'Failed to create transaction',
-            message: error.message
+            message: error instanceof Error ? error.message : 'Unknown error occurred'
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
