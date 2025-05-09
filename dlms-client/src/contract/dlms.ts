@@ -831,7 +831,7 @@ export type DlmsContract = {
               {
                 "kind": "const",
                 "value": [
-                  117,
+                  85,
                   115,
                   101,
                   114
@@ -853,7 +853,7 @@ export type DlmsContract = {
               {
                 "kind": "const",
                 "value": [
-                  114,
+                  82,
                   101,
                   118,
                   105,
