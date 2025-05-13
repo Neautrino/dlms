@@ -8,11 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bell, Wallet, Filter, DollarSign, Search, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Wallet, Filter, DollarSign, Search, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAtom } from 'jotai';
 import { userBalanceAtom } from '@/lib/atoms';
@@ -42,6 +41,14 @@ export default function Navbar() {
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('');
   const [balance] = useAtom(userBalanceAtom);
 
+  // Sample notifications - you can replace these with your actual notifications
+  const notifications = [
+    "Welcome to DLMS! 🎉",
+    "New features coming soon! 🚀",
+    "Join our community on Discord! 💬",
+    "Check out our latest updates! 📢"
+  ];
+
   return (
     <motion.nav 
       className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 shadow-sm"
@@ -49,7 +56,42 @@ export default function Navbar() {
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-end gap-8">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-10 flex-1">
+          <div className="relative overflow-hidden flex-1 h-8 bg-white dark:bg-gray-900 rounded-full shadow-sm">
+            <motion.div
+              className="absolute whitespace-nowrap flex"
+              animate={{
+                x: [0, '-50%'],
+              }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: 30,
+                  ease: "linear",
+                },
+              }}
+              style={{ width: 'max-content' }}
+            >
+              <div className="flex">
+                {notifications.map((notification, index) => (
+                  <span key={index} className="inline-block mx-8 text-sm text-gray-600 dark:text-gray-400">
+                    {notification}
+                  </span>
+                ))}
+              </div>
+              <div className="flex">
+                {notifications.map((notification, index) => (
+                  <span key={index} className="inline-block mx-8 text-sm text-gray-600 dark:text-gray-400">
+                    {notification}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <motion.div

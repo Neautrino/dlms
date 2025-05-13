@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 			...(country && { country }),
 			...(verificationDocumentsUrl && { verificationDocuments: verificationDocumentsUrl }),
 			...(company && { company }),
-			...(industryFocus && { industryFocus: industryFocus.split(",").map(item => item.trim()).filter(Boolean) }),
+			...(industryFocus && { industryFocus }),
 			...(founded && { founded: parseInt(founded) }),
 			...(location && { location }),
 			...(managementExperience && { managementExperience: parseInt(managementExperience) }),

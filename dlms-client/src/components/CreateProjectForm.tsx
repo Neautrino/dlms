@@ -7,6 +7,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { 
   X, Loader2, Plus, Upload, Briefcase, DollarSign, Calendar, Users, 
   MapPin, Building2, FileText, Tag, ChevronRight, ChevronLeft, CheckCircle, Globe
@@ -29,6 +30,7 @@ const COUNTRIES = [
 export default function CreateProjectForm({ onClose }: { onClose: () => void }) {
   const { publicKey } = useWallet();
   const { theme } = useTheme();
+  const { toast } = useToast();
   const isDarkMode = theme === 'dark';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,9 +157,19 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
       }
 
       // Success handling
+      toast('success', {
+        title: "Project Created",
+        description: "Your project has been created successfully!"
+      });
+      
       window.location.href = '/dashboard'; // Redirect to dashboard or projects page
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while creating the project');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while creating the project';
+      setError(errorMessage);
+      toast('error', {
+        title: "Error",
+        description: errorMessage
+      });
     } finally {
       setIsSubmitting(false);
     }

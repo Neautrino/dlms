@@ -62,7 +62,7 @@ export interface ManagerMetadata {
     industry?: string;
     founded?: number;
     location?: string;
-    industryFocus?: string[];
+    industryFocus?: string;
   };
   managementExperience?: number;
   relevantDocuments?: string;

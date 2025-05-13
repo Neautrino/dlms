@@ -279,7 +279,7 @@ export default function UserDashboard({ userData }: { userData: FullUserData }) 
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Industry Focus</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Industry</p>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{managerMetadata.companyDetails?.industryFocus?.length || 0}</h3>
                 </div>
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
@@ -293,9 +293,9 @@ export default function UserDashboard({ userData }: { userData: FullUserData }) 
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Company Age</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Company Established</p>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {managerMetadata.companyDetails?.founded ? new Date().getFullYear() - managerMetadata.companyDetails.founded : 0} years
+                    {managerMetadata.companyDetails?.founded ? new Date().getFullYear() - managerMetadata.companyDetails.founded : 0} years ago
                   </h3>
                 </div>
                 <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
@@ -334,7 +334,7 @@ export default function UserDashboard({ userData }: { userData: FullUserData }) 
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 dark:text-gray-300">Company Name</span>
-                      <span className="text-gray-900 dark:text-gray-200">{managerMetadata.companyDetails?.company}</span>
+                      <span className="text-gray-900 dark:text-gray-200">{managerMetadata.companyDetails?.companyName}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 dark:text-gray-300">Industry</span>
@@ -360,13 +360,9 @@ export default function UserDashboard({ userData }: { userData: FullUserData }) 
                     <CardDescription className="text-gray-600 dark:text-gray-400">Areas of expertise and specialization</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {managerMetadata.companyDetails?.industryFocus?.map((focus, index) => (
-                        <Badge key={index} className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200">
-                          {focus}
-                        </Badge>
-                      ))}
-                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {managerMetadata.companyDetails?.industryFocus || 'No industry focus specified'}
+                    </p>
                   </CardContent>
                 </Card>
               </div>

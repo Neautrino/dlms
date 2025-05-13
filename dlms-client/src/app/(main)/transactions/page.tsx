@@ -9,6 +9,8 @@ import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { Transaction } from '@solana/web3.js';
 import { connection } from '@/utils/program';
+import { useSetAtom } from 'jotai';
+import { userBalanceAtom } from '@/lib/atoms';
 
 export default function TransferPage() {
   const { publicKey, signTransaction } = useWallet();
@@ -18,6 +20,7 @@ export default function TransferPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const setBalance = useSetAtom(userBalanceAtom);
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +67,29 @@ export default function TransferPage() {
       // Wait for confirmation
       await connection.confirmTransaction(signature);
 
+      
       setSuccess(`Successfully minted ${amount} tokens!`);
       setAmount('');
+
+      // Update the user's token balance
+      const balanceResponse = await fetch('/api/get-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+        body: JSON.stringify({
+          userPubkey: publicKey.toString(),
+        }),
+      });
+
+      const balanceData = await balanceResponse.json();
+
+      if (!balanceData.success) {
+        throw new Error(balanceData.error || 'Failed to update token balance');
+      }
+
+      setBalance(balanceData.balance);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while minting tokens');
     } finally {
