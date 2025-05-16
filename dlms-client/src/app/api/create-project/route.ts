@@ -27,14 +27,14 @@ export async function POST(request: NextRequest) {
     const durationDays = body.get("durationDays") as string;
     const maxLabourers = body.get("maxLabourers") as string;
     const projectImage = body.get("projectImage") as File | null;
-    
+
     // Get additional project details
     const country = body.get("country") as string;
     const state = body.get("state") as string;
     const requiredSkills = body.get("requiredSkills") as string;
     const company = body.get("company") as string;
     const category = body.get("category") as string;
-    const managerAddress = body.get("managerAddress") as string; 
+    const managerAddress = body.get("managerAddress") as string;
     const startDate = body.get("startDate") as string | null;
     const applicationDeadline = body.get("applicationDeadline") as string | null
 
@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
 
     // Handle multiple file uploads for project documentation
     const relevantDocuments = Array.from(body.entries())
-			.filter(([key]) => key.startsWith("relevantDocuments"))
-			.map(([_, value]) => value as File);
+      .filter(([key]) => key.startsWith("relevantDocuments"))
+      .map(([_, value]) => value as File);
 
     if (!walletAddress) {
       return Response.json({
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!title || !dailyRate || !durationDays || !maxLabourers || !description || 
-        !country || !state || !company || !category || !walletAddress) {
+    if (!title || !dailyRate || !durationDays || !maxLabourers || !description ||
+      !country || !state || !company || !category || !walletAddress) {
       return Response.json({
         success: false,
         error: "Missing required fields"
@@ -102,11 +102,11 @@ export async function POST(request: NextRequest) {
 
 
     // Upload multiple relevant documents
-		let relevantDocumentsUrl = ""
-		if (relevantDocuments.length > 0) {
-			const uploaded = await pinata.upload.public.fileArray(relevantDocuments);
-			relevantDocumentsUrl = await getUrl(uploaded.cid);
-		}
+    let relevantDocumentsUrl = ""
+    if (relevantDocuments.length > 0) {
+      const uploaded = await pinata.upload.public.fileArray(relevantDocuments);
+      relevantDocumentsUrl = await getUrl(uploaded.cid);
+    }
 
 
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       description,
       location: `${country}, ${state}`,
       requiredSkills: requiredSkills ? requiredSkills.split(",").map(item => item.trim()).filter(Boolean) : [],
-      category, 
+      category,
       walletAddress,
       required_labourer_count: maxLabourersNumber,
       ...(projectImageUrl && { projectImage: projectImageUrl }),
@@ -150,11 +150,15 @@ export async function POST(request: NextRequest) {
     const systemState = await program.account.systemState.fetch(systemStatePda);
     const projectCount = systemState.projectCount;
 
-    // Calculate the project PDA
-    const [projectPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("Project"), managerAccountPda.toBuffer(), new Uint8Array(new BN(projectCount))],
+    let thisU32 = new BN(projectCount);
+    let projectPda = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("Project"),
+        managerAccountPda.toBuffer(),
+        thisU32.toBuffer("le", 4),
+      ],
       program.programId
-    );
+    )[0];
 
     // Calculate the escrow account PDA
     const [escrowAccountPda] = PublicKey.findProgramAddressSync(
@@ -238,6 +242,8 @@ export async function POST(request: NextRequest) {
     return Response.json({
       success: true,
       metadataUrl,
+      lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
+      blockhash: blockhashResponse.blockhash,
       serializedTransaction: base58SerializedTx,
       metadata,
       project: projectData,

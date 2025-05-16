@@ -12,6 +12,7 @@ import { sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
 import { connection } from '@/utils/program';
 import bs58 from 'bs58';
 import { currentUserAtom } from '@/lib/atoms';
+import { useToast } from '@/hooks/use-toast';
 
 // Single atom for all form state
 const formStateAtom = atom({
@@ -110,6 +111,7 @@ export default function Registration() {
   // Theme integration
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
 
   // Form state
   const [formState, setFormState] = useAtom(formStateAtom);
@@ -434,8 +436,6 @@ export default function Registration() {
       }
 
       console.log('Signing transaction...');
-      console.log(transaction);
-      console.log(typeof transaction);
       const signedTransaction = await signTransaction(transaction);
 
       // Send the signed transaction to the network
@@ -492,7 +492,7 @@ export default function Registration() {
           country: formState.country,
           verificationDocuments: verificationDocumentsUrl,
           companyDetails: {
-            company: formState.companyDetails.company,
+            companyName: formState.companyDetails.company,
             industry: formState.companyDetails.industry,
             founded: formState.companyDetails.founded,
             location: formState.companyDetails.location,
@@ -505,6 +505,14 @@ export default function Registration() {
 
       // Update the user state
       setUser(userData);
+
+      toast('success', {
+        title: 'Registration successful',
+        description: 'You can now start using the platform',
+        duration: 5000,
+        position: 'bottom-right',
+        icon: '🚀'
+      });
 
       // Redirect to home page
       router.push('/home');

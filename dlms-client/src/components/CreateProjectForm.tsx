@@ -13,6 +13,10 @@ import {
   MapPin, Building2, FileText, Tag, ChevronRight, ChevronLeft, CheckCircle, Globe
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
+import { connection } from '@/utils/program';
+import bs58 from 'bs58';
+import { useRouter } from 'next/navigation';
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -28,9 +32,10 @@ const COUNTRIES = [
 ];
 
 export default function CreateProjectForm({ onClose }: { onClose: () => void }) {
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const router = useRouter();
   const isDarkMode = theme === 'dark';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,19 +161,46 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
         throw new Error(data.error || 'Failed to create project');
       }
 
+      // Decode the base58 transaction
+      const transaction = Transaction.from(bs58.decode(data.serializedTransaction));
+      transaction.recentBlockhash = data.blockhash;
+      transaction.feePayer = publicKey;
+
+      // Sign the transaction with the user's wallet
+      if (!signTransaction) {
+        throw new Error("Wallet does not support transaction signing");
+      }
+
+      console.log('Signing transaction...');
+      const signedTransaction = await signTransaction(transaction);
+
+      // Send the signed transaction to the network
+      const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+
+      // Optionally, confirm the transaction
+      await connection.confirmTransaction(txid);
+
+      console.log('Transaction sent and confirmed:', txid);
+
       // Success handling
       toast('success', {
         title: "Project Created",
-        description: "Your project has been created successfully!"
+        description: "Your project has been created successfully!",
+        duration: 3000,
+        position: 'bottom-right',
+        icon: '🎉'
       });
       
-      window.location.href = '/dashboard'; // Redirect to dashboard or projects page
+      router.push('/projects');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while creating the project';
       setError(errorMessage);
       toast('error', {
         title: "Error",
-        description: errorMessage
+        description: errorMessage,
+        duration: 3000,
+        position: 'bottom-right',
+        icon: '🚫'
       });
     } finally {
       setIsSubmitting(false);
