@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     // Get basic project fields
     const title = body.get("title") as string;
     const description = body.get("description") as string;
-    const walletAddress = body.get("walletAddress") as string;
     const dailyRate = body.get("dailyRate") as string;
     const durationDays = body.get("durationDays") as string;
     const maxLabourers = body.get("maxLabourers") as string;
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
     const requiredSkills = body.get("requiredSkills") as string;
     const company = body.get("company") as string;
     const category = body.get("category") as string;
-    const managerAddress = body.get("managerAddress") as string;
+    const managerWalletAddress = body.get("managerWalletAddress") as string;
     const startDate = body.get("startDate") as string | null;
     const applicationDeadline = body.get("applicationDeadline") as string | null
 
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
       .filter(([key]) => key.startsWith("relevantDocuments"))
       .map(([_, value]) => value as File);
 
-    if (!walletAddress) {
+    if (!managerWalletAddress) {
       return Response.json({
         success: false,
         error: "Wallet address is required"
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!title || !dailyRate || !durationDays || !maxLabourers || !description ||
-      !country || !state || !company || !category || !walletAddress) {
+      !country || !state || !company || !category || !managerWalletAddress) {
       return Response.json({
         success: false,
         error: "Missing required fields"
@@ -117,7 +116,8 @@ export async function POST(request: NextRequest) {
       location: `${country}, ${state}`,
       requiredSkills: requiredSkills ? requiredSkills.split(",").map(item => item.trim()).filter(Boolean) : [],
       category,
-      walletAddress,
+      company,
+      managerWalletAddress,
       required_labourer_count: maxLabourersNumber,
       ...(projectImageUrl && { projectImage: projectImageUrl }),
       ...(startDate && { startDate }),
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     const metadataUrl = await uploadMetadataToPinata(metadata);
 
     // Create transaction for the Solana program
-    const currentWallet = new PublicKey(walletAddress);
+    const currentWallet = new PublicKey(managerWalletAddress);
 
     // Get the manager account PDA
     const [managerAccountPda] = PublicKey.findProgramAddressSync(

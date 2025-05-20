@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, Clock, Users, ChevronDown, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Grid, List, Plus } from 'lucide-react';
+import { Search, Filter, Calendar, Clock, Users, ChevronDown, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Grid, List, Plus, Hexagon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -51,7 +51,7 @@ export default function ProjectsListingPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
-  
+
   // Jotai atoms
   const [allProjects, setAllProjects] = useAtom(allProjectsAtom);
   const [paginatedProjects] = useAtom(paginatedProjectsAtom);
@@ -59,10 +59,10 @@ export default function ProjectsListingPage() {
   const [hasMoreProjects] = useAtom(hasMoreProjectsAtom);
   const [currentUser] = useAtom(currentUserAtom);
   const [registrationStatus] = useAtom(userRegistrationStatusAtom);
-  
+
   // Local state for filtered projects
   const [filteredProjects, setFilteredProjects] = useState<FullProjectData[]>([]);
-  
+
   // Fetch projects from API only once
   useEffect(() => {
     const fetchProjects = async () => {
@@ -71,15 +71,15 @@ export default function ProjectsListingPage() {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         setIsLoading(true);
         const response = await fetch('/api/projects');
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch projects');
         }
-        
+
         const data = await response.json();
         setAllProjects(data);
       } catch (err) {
@@ -89,7 +89,7 @@ export default function ProjectsListingPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchProjects();
   }, [allProjects.length, setAllProjects]);
 
@@ -99,20 +99,19 @@ export default function ProjectsListingPage() {
   // Apply filters and search to paginated projects
   useEffect(() => {
     let result = [...paginatedProjects];
-    
+
     // Apply search
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
-      result = result.filter(project => 
+      result = result.filter(project =>
         project.project.title.toLowerCase().includes(lowerSearch) ||
         project.metadata.description.toLowerCase().includes(lowerSearch) ||
         project.metadata.requiredSkills.some(skill => skill.toLowerCase().includes(lowerSearch)) ||
         project.metadata.location.toLowerCase().includes(lowerSearch) ||
-        project.metadata.company?.toLowerCase().includes(lowerSearch) ||
-        project.metadata.managerName.toLowerCase().includes(lowerSearch)
+        project.metadata.company?.toLowerCase().includes(lowerSearch)
       );
     }
-    
+
     // Apply status filter
     if (statusFilter !== 'all') {
       result = result.filter(project => {
@@ -123,12 +122,12 @@ export default function ProjectsListingPage() {
         return true;
       });
     }
-    
+
     // Apply category filter
     if (categoryFilter !== 'all') {
       result = result.filter(project => project.metadata.category === categoryFilter);
     }
-    
+
     // Apply location filter
     if (locationFilter !== 'all') {
       result = result.filter(project => {
@@ -138,7 +137,7 @@ export default function ProjectsListingPage() {
         return true;
       });
     }
-    
+
     // Apply sorting
     if (rateSortOrder !== 'none') {
       result.sort((a, b) => {
@@ -149,7 +148,7 @@ export default function ProjectsListingPage() {
         }
       });
     }
-    
+
     if (durationSortOrder !== 'none') {
       result.sort((a, b) => {
         if (durationSortOrder === 'asc') {
@@ -159,36 +158,40 @@ export default function ProjectsListingPage() {
         }
       });
     }
-    
+
     setFilteredProjects(result);
   }, [paginatedProjects, searchTerm, statusFilter, categoryFilter, locationFilter, rateSortOrder, durationSortOrder]);
 
   // Format timestamp to relative time
   const formatRelativeTime = (timestamp: number) => {
-    const diff = Date.now() - timestamp;
+    const now = Date.now();
+    const tsInMs = timestamp * 1000; // convert seconds to milliseconds
+    const diff = now - tsInMs;
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days < 1) return 'Today';
     if (days === 1) return 'Yesterday';
     if (days < 30) return `${days} days ago`;
-    if (days < 365) return `${Math.floor(days/30)} months ago`;
-    return `${Math.floor(days/365)} years ago`;
+    if (days < 365) return `${Math.floor(days / 30)} months ago`;
+    return `${Math.floor(days / 365)} years ago`;
   };
 
-  // Format daily rate to currency
-  const formatCurrency = (amount: number) => {
+
+
+  const formattedAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(amount);
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 9,
+    }).format(amount / 1e9);
   };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: ProjectStatus }) => {
     let statusText: string;
     let statusClasses: string;
-    
+
     switch (status) {
       case ProjectStatus.Open:
         statusText = 'Open';
@@ -210,7 +213,7 @@ export default function ProjectsListingPage() {
         statusText = 'Unknown';
         statusClasses = 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
-    
+
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClasses}`}>
         {statusText}
@@ -229,7 +232,7 @@ export default function ProjectsListingPage() {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
-      <motion.div 
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -260,12 +263,12 @@ export default function ProjectsListingPage() {
                   >
                     <Filter size={18} />
                     <span>Filters</span>
-                    <ChevronDown 
-                      size={18} 
-                      className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} 
+                    <ChevronDown
+                      size={18}
+                      className={`transition-transform ${showFilters ? 'rotate-180' : ''}`}
                     />
                   </motion.button>
-                  
+
                   {registrationStatus.role === 'manager' && (
                     <motion.button
                       whileTap={{ scale: 0.97 }}
@@ -278,7 +281,7 @@ export default function ProjectsListingPage() {
                   )}
                 </div>
               </div>
-              
+
               {/* Expandable filters */}
               <AnimatePresence>
                 {showFilters && (
@@ -368,7 +371,7 @@ export default function ProjectsListingPage() {
             </CardContent>
           </Card>
         </motion.div>
-        
+
         {/* Projects Stats */}
         <motion.div variants={itemVariants} className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -378,33 +381,30 @@ export default function ProjectsListingPage() {
             <div className="flex gap-4">
               <button
                 onClick={() => setStatusFilter(statusFilter === 'open' ? 'all' : 'open')}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
-                  statusFilter === 'open' 
-                    ? 'bg-green-100 dark:bg-green-900/20' 
+                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${statusFilter === 'open'
+                    ? 'bg-green-100 dark:bg-green-900/20'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                  }`}
               >
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-300">Open</span>
               </button>
               <button
                 onClick={() => setStatusFilter(statusFilter === 'in-progress' ? 'all' : 'in-progress')}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
-                  statusFilter === 'in-progress' 
-                    ? 'bg-blue-100 dark:bg-blue-900/20' 
+                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${statusFilter === 'in-progress'
+                    ? 'bg-blue-100 dark:bg-blue-900/20'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                  }`}
               >
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-300">In Progress</span>
               </button>
               <button
                 onClick={() => setStatusFilter(statusFilter === 'completed' ? 'all' : 'completed')}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
-                  statusFilter === 'completed' 
-                    ? 'bg-gray-100 dark:bg-gray-800' 
+                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${statusFilter === 'completed'
+                    ? 'bg-gray-100 dark:bg-gray-800'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
+                  }`}
               >
                 <div className="w-3 h-3 rounded-full bg-gray-500"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-300">Completed</span>
@@ -414,27 +414,25 @@ export default function ProjectsListingPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'list'
+              className={`p-2 rounded-md transition-colors ${viewMode === 'list'
                   ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               <List size={20} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
+              className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
                   ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-              }`}
+                }`}
             >
               <Grid size={20} />
             </button>
           </div>
         </motion.div>
-        
+
         {/* Loading state */}
         {isLoading && (
           <motion.div variants={itemVariants} className="p-12 text-center">
@@ -444,7 +442,7 @@ export default function ProjectsListingPage() {
             <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Loading projects...</h3>
           </motion.div>
         )}
-        
+
         {/* Error state */}
         {error && !isLoading && (
           <motion.div variants={itemVariants} className="p-12 text-center">
@@ -460,59 +458,51 @@ export default function ProjectsListingPage() {
             <Button onClick={() => window.location.reload()}>Try Again</Button>
           </motion.div>
         )}
-        
+
         {/* Projects Grid/List */}
         {!isLoading && !error && (
-          <motion.div variants={itemVariants} className={`grid ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
+          <motion.div variants={itemVariants} className={`grid ${viewMode === 'grid'
+              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               : 'grid-cols-1'
-          } gap-4`}>
+            } gap-4`}>
             {filteredProjects.map((projectData) => (
               <Link href={`/projects/${projectData.project.index}`} key={projectData.project.index}>
-                <Card className={`flex ${
-                  viewMode === 'list' ? 'flex-row' : 'flex-col'
-                } rounded-xl overflow-hidden bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 hover:ring-2 hover:ring-purple-500 dark:hover:ring-purple-400 transition-all duration-200 h-full group`}>
-                  <div className={`relative ${
-                    viewMode === 'list' ? 'w-1/3' : 'w-full'
-                  }`}>
-                    <Image 
-                      src={projectData.metadata.projectImage || "/api/placeholder/400/200"} 
-                      width={400} 
-                      height={200} 
+                <Card className={`flex ${viewMode === 'list' ? 'flex-row' : 'flex-col'
+                  } rounded-xl overflow-hidden bg-white dark:bg-gray-950 py-0 gap-2 border-gray-200 dark:border-gray-800 hover:ring-2 hover:ring-purple-500 dark:hover:ring-purple-400 transition-all duration-200 h-full group`}>
+                  <div className={`relative ${viewMode === 'list' ? 'w-1/3' : 'w-full'
+                    }`}>
+                    <Image
+                      src={projectData.metadata.projectImage || "/api/placeholder/400/200"}
+                      width={400}
+                      height={200}
                       alt={projectData.project.title}
-                      className={`${
-                        viewMode === 'list' ? 'h-full' : 'h-32'
-                      } w-full object-cover transition-transform duration-300 group-hover:scale-105`}
+                      className={`${viewMode === 'list' ? 'h-full' : 'h-32'
+                        } w-full object-cover transition-transform duration-300 group-hover:scale-105`}
                     />
                     <div className="absolute bottom-0 right-0 p-2">
                       <StatusBadge status={projectData.project.status} />
                     </div>
-                    {projectData.metadata.companyDetails?.verifiedDocument && (
-                      <div className="absolute top-2 left-2">
-                        <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                          Verified Company
-                        </Badge>
-                      </div>
-                    )}
+                    
                   </div>
-                  
-                  <CardContent className={`p-4 flex-grow flex flex-col ${
-                    viewMode === 'list' ? 'w-2/3' : ''
-                  }`}>
+
+                  <CardContent className={`p-4 flex-grow flex flex-col ${viewMode === 'list' ? 'w-2/3' : ''
+                    }`}>
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                         {projectData.project.title}
                       </h3>
-                      <div className="text-purple-600 dark:text-purple-400 font-bold whitespace-nowrap">
-                        {formatCurrency(projectData.project.daily_rate)}/day
+                      <div className="text-purple-600 dark:text-purple-400 font-bold flex justify-center gap-2
+                       whitespace-nowrap">
+                        <Hexagon />
+                        {formattedAmount(projectData.project.daily_rate)} DLT
+                        /day
                       </div>
                     </div>
-                    
+
                     <div className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
                       {projectData.metadata.description}
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {projectData.metadata.requiredSkills.slice(0, 2).map((skill, idx) => (
                         <Badge key={idx} className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300">
@@ -525,9 +515,9 @@ export default function ProjectsListingPage() {
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="mt-auto">
-                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-2 px-2">
                         <div className="flex items-center gap-1">
                           <Calendar size={14} className="text-purple-500" />
                           <span>{projectData.project.duration_days} days</span>
@@ -535,19 +525,6 @@ export default function ProjectsListingPage() {
                         <div className="flex items-center gap-1">
                           <Users size={14} className="text-purple-500" />
                           <span>{projectData.project.labour_count}/{projectData.project.max_labourers}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm border-t border-gray-200 dark:border-gray-700 pt-2">
-                        <div className="flex items-center gap-2">
-                          <div className="relative w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                            <span className="text-xs font-medium text-purple-800 dark:text-purple-200">
-                              {projectData.metadata.managerName.charAt(0)}
-                            </span>
-                          </div>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium text-sm">
-                            {projectData.metadata.managerName}
-                          </span>
                         </div>
                         <span className="text-gray-500 dark:text-gray-400 text-xs">
                           {formatRelativeTime(projectData.project.timestamp)}
@@ -560,7 +537,7 @@ export default function ProjectsListingPage() {
             ))}
           </motion.div>
         )}
-        
+
         {!isLoading && !error && filteredProjects.length === 0 && (
           <motion.div variants={itemVariants} className="p-12 text-center">
             <div className="mb-4">
@@ -572,11 +549,11 @@ export default function ProjectsListingPage() {
             </p>
           </motion.div>
         )}
-        
+
         {/* Load More Button - uses Jotai for pagination */}
         {!isLoading && !error && filteredProjects.length > 0 && hasMoreProjects && (
           <motion.div variants={itemVariants} className="flex justify-center mt-8">
-            <Button 
+            <Button
               onClick={loadMoreProjects}
               className="px-6 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white font-medium"
               disabled={isLoadingMore}

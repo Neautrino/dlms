@@ -28,8 +28,9 @@ export interface ProjectMetadata {
     location: string;
     requiredSkills: string[];
     projectImage?: string;
+    company: string;
     category: string;
-    walletAddress: string;
+    managerWalletAddress: string;
     startDate?: string;
     required_labourer_count: number;
     application_deadline?: string;
