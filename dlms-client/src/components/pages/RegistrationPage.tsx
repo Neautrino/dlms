@@ -908,7 +908,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add a skill"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                        required
+                        // required
                       />
                       <button
                         type="button"
@@ -961,7 +961,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add experience"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addExperience())}
-                        required
+                        // required
                       />
                       <button
                         type="button"
@@ -1014,7 +1014,7 @@ export default function Registration() {
                           } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                         placeholder="Add certification"
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCertification())}
-                        required
+                        // required
                       />
                       <button
                         type="button"
@@ -1067,7 +1067,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Job title"
-                          required
+                          // required
                         />
                       </div>
                       <div>
@@ -1080,7 +1080,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Duration (e.g., Jan 2020 - Dec 2022)"
-                          required
+                          // required
                         />
                       </div>
                       <div>
@@ -1093,7 +1093,7 @@ export default function Registration() {
                               : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-400'
                             } focus:outline-none focus:ring-1 focus:ring-indigo-500`}
                           placeholder="Job description"
-                          required
+                          // required
                         />
                       </div>
                     </div>

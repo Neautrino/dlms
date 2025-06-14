@@ -121,34 +121,6 @@ export default function UserDetailsPage() {
     return `${average} (${count} reviews)`;
   };
 
-  const handleRatingSubmit = async (rating: number, review: string) => {
-    try {
-      const response = await fetch('/api/rate-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress: user?.account.authority,
-          rating,
-          review,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit rating');
-      }
-
-      // Refresh user data to show updated rating
-      if (params.walletAddress) {
-        fetchUserDetails();
-      }
-    } catch (error) {
-      console.error('Error submitting rating:', error);
-      throw error;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -237,7 +209,7 @@ export default function UserDetailsPage() {
                 </div>
 
                 {/* Add Rate Button */}
-                {currentUser && (
+                {currentUser && currentUser.account.authority !== user.account.authority && (
                   <div className="mt-4 flex justify-center">
                     <Button
                       onClick={() => setIsRatingPopupOpen(true)}
@@ -384,22 +356,32 @@ export default function UserDetailsPage() {
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Documents</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {typedUser.metadata.verificationDocuments && (
-                            <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <UserCheck className="h-5 w-5 text-indigo-500 mr-3" />
-                              <div>
+                            <a 
+                              href={typedUser.metadata.verificationDocuments}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                            >
+                              <UserCheck className="h-5 w-5 text-indigo-500 mr-3 flex-shrink-0" />
+                              <div className="min-w-0">
                                 <h4 className="text-sm font-medium">Verification Documents</h4>
-                                <p className="text-xs text-gray-500">{typedUser.metadata.verificationDocuments}</p>
+                                <p className="text-xs text-gray-500 truncate">{typedUser.metadata.verificationDocuments}</p>
                               </div>
-                            </div>
+                            </a>
                           )}
                           {typedUser.metadata.relevantDocuments && (
-                            <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                              <FileText className="h-5 w-5 text-indigo-500 mr-3" />
-                              <div>
+                            <a 
+                              href={typedUser.metadata.relevantDocuments}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                            >
+                              <FileText className="h-5 w-5 text-indigo-500 mr-3 flex-shrink-0" />
+                              <div className="min-w-0">
                                 <h4 className="text-sm font-medium">Relevant Documents</h4>
-                                <p className="text-xs text-gray-500">{typedUser.metadata.relevantDocuments}</p>
+                                <p className="text-xs text-gray-500 truncate">{typedUser.metadata.relevantDocuments}</p>
                               </div>
-                            </div>
+                            </a>
                           )}
                         </div>
                       </div>
@@ -639,7 +621,7 @@ export default function UserDetailsPage() {
         isOpen={isRatingPopupOpen}
         onClose={() => setIsRatingPopupOpen(false)}
         userName={user.account.name}
-        onSubmit={handleRatingSubmit}
+        userAddress={user.account.authority}
       />
     </motion.div>
   );

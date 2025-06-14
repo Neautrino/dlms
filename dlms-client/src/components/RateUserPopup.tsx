@@ -6,16 +6,23 @@ import { Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTheme } from 'next-themes';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
+import { toast } from 'sonner';
 
 interface RateUserPopupProps {
   isOpen: boolean;
   onClose: () => void;
   userName: string;
-  onSubmit: (rating: number, review: string) => void;
+  userAddress: string;
 }
 
-export default function RateUserPopup({ isOpen, onClose, userName, onSubmit }: RateUserPopupProps) {
+export default function RateUserPopup({ isOpen, onClose, userName, userAddress }: RateUserPopupProps) {
   const { theme } = useTheme();
+  const { publicKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
   const isDarkMode = theme === 'dark';
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -24,14 +31,52 @@ export default function RateUserPopup({ isOpen, onClose, userName, onSubmit }: R
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) return;
+    if (rating === 0 || !publicKey || !signTransaction) return;
     
     setIsSubmitting(true);
     try {
-      await onSubmit(rating, review);
+      // Call the rate-user API
+      const response = await fetch('/api/rate-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating,
+          context: review,
+          userAddress,
+          reviewerAddress: publicKey.toBase58(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to create rating transaction');
+      }
+
+      // Deserialize and sign the transaction
+      const transaction = Transaction.from(bs58.decode(data.serializedTransaction));
+      transaction.recentBlockhash = data.blockhash;
+      transaction.lastValidBlockHeight = data.lastValidBlockHeight;
+
+      const signedTx = await signTransaction(transaction);
+      
+      // Send the transaction
+      const signature = await connection.sendRawTransaction(signedTx.serialize());
+      
+      // Wait for confirmation
+      await connection.confirmTransaction({
+        signature,
+        blockhash: data.blockhash,
+        lastValidBlockHeight: data.lastValidBlockHeight,
+      });
+
+      toast.success('Rating submitted successfully!');
       onClose();
     } catch (error) {
       console.error('Error submitting rating:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit rating');
     } finally {
       setIsSubmitting(false);
     }
@@ -107,7 +152,7 @@ export default function RateUserPopup({ isOpen, onClose, userName, onSubmit }: R
 
             <Button
               type="submit"
-              disabled={rating === 0 || isSubmitting}
+              disabled={rating === 0 || isSubmitting || !publicKey}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Rating'}

@@ -1,81 +1,72 @@
-// File: app/api/create-project/route.ts
+// File: app/api/apply-to-project/route.ts
 import {
     PublicKey,
     SystemProgram,
-    SYSVAR_RENT_PUBKEY,
     Transaction
   } from "@solana/web3.js";
   import { NextRequest } from "next/server";
-  import { getUrl, pinata, uploadFileToPinata, uploadMetadataToPinata } from "@/utils/config";
-  import { ProjectMetadata, ProjectStatus } from "@/types/project";
   import { program } from "@/utils/program";
   import bs58 from "bs58";
-  import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-  import { BN } from "@coral-xyz/anchor";
+  import { ApplicationStatus } from "@/types/application";
   
   export async function POST(request: NextRequest) {
     try {
       const body = await request.json();
   
-      // Get required fields
-      const { rating, context, userAddress, reviewerAddress } = body;
+      // Get basic application fields
+      const { 
+        walletAddress, 
+        projectPublicKey, 
+        description, 
+      } = body;
   
-      if (!rating || !context || !userAddress || !reviewerAddress) {
+      if (!walletAddress || !projectPublicKey || !description) {
         return Response.json({
           success: false,
-          error: "Missing required fields"
+          error: "Missing required fields: wallet address, project ID, and description are required"
         }, {
           status: 400,
         });
       }
 
-      if (reviewerAddress === userAddress) {
-        return Response.json({
-          success: false,
-          error: "You cannot rate yourself"
-        }, { status: 400 });
-      }
+      // Create transaction for the Solana program
+      const currentWallet = new PublicKey(walletAddress);
+      const projectPubKey = new PublicKey(projectPublicKey);
   
-      // Validate rating
-      const ratingNumber = parseInt(rating);
-      if (isNaN(ratingNumber) || ratingNumber < 1 || ratingNumber > 5) {
-        return Response.json({
-          success: false,
-          error: "Rating must be between 1 and 5"
-        }, { status: 400 });
-      }
-  
-      // Get the user account PDA
-      const [userAccountPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("User"), new PublicKey(userAddress).toBuffer()],
+      // Get the labour account PDA (user account)
+      const [labourAccountPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("User"), currentWallet.toBuffer()],
         program.programId
       );
   
-      // Get the review account PDA
-      const [reviewPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("Review"), new PublicKey(reviewerAddress).toBuffer(), userAccountPda.toBuffer()],
+      // Calculate the application PDA
+      const [applicationPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("Application"), labourAccountPda.toBuffer(), projectPubKey.toBuffer()],
         program.programId
       );
-
-      const currentWallet = new PublicKey(reviewerAddress);
   
       const blockhashResponse = await program.provider.connection.getLatestBlockhash();
-    	const tx = new Transaction();
+      const tx = new Transaction();
   
+      console.log("Labour Account PDA: ", labourAccountPda.toBase58());
+      console.log("Project PDA: ", projectPubKey.toBase58());
+      console.log("Application PDA: ", applicationPda.toBase58());
+  
+      // Add application instruction to transaction
       await program.methods
-        .rateUser(
-          ratingNumber,
-          context
-        )
+        .applyToProject(description)
         .accounts({
           // @ts-ignore
-          userAccount: userAccountPda,
-          review: reviewPda,
+          labourAccount: labourAccountPda,
+          project: projectPubKey,
+          application: applicationPda,
           authority: currentWallet,
           systemProgram: SystemProgram.programId,
         })
         .instruction()
         .then(ix => tx.add(ix));
+  
+      console.log("Transaction created");
   
       tx.recentBlockhash = blockhashResponse.blockhash;
       tx.feePayer = currentWallet;
@@ -83,13 +74,20 @@ import {
       const serializedTransaction = tx.serialize({ requireAllSignatures: false });
       const base58SerializedTx = bs58.encode(serializedTransaction);
   
+      // Prepare expected on-chain application data structure for the response
+      const applicationData = {
+        labour: labourAccountPda.toBase58(),
+        project: projectPubKey.toBase58(),
+        description,
+        status: ApplicationStatus.Pending,
+        timestamp: Math.floor(Date.now() / 1000),
+      };
+  
       return Response.json({
         success: true,
-        lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
-			blockhash: blockhashResponse.blockhash,
         serializedTransaction: base58SerializedTx,
-        userAccountPda: userAccountPda.toBase58(),
-        reviewPda: reviewPda.toBase58()
+        application: applicationData,
+        applicationPda: applicationPda.toBase58()
       }, {
         status: 200,
         headers: {
@@ -97,7 +95,7 @@ import {
         }
       });
     } catch (error) {
-      console.error("Error in rate-user route:", error);
+      console.error("Error in apply-to-project route:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
   
       return Response.json({

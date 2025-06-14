@@ -6,7 +6,7 @@ import {
 } from "@solana/web3.js";
 import { NextRequest } from "next/server";
 import { getUrl, pinata, uploadFileToPinata, uploadMetadataToPinata } from "@/utils/config";
-import { LaborMetadata } from "@/types/user";
+import { ManagerMetadata } from "@/types/user";
 import { program } from "@/utils/program";
 import bs58 from "bs58";
 
@@ -31,10 +31,11 @@ export async function POST(request: NextRequest) {
 		const verificationDocuments = body.get("verificationDocuments") as File | null;
 
 		// Get work details
-		const skillsets = body.get("skillsets") as string | null;
-		const experience = body.get("experience") as string | null;
-		const workHistory = body.get("workHistory") as string | null;
-		const certifications = body.get("certifications") as string | null;
+		const company = body.get("company") as string;
+		const industryFocus = body.get("industryFocus") as string;
+		const founded = body.get("founded") as string;
+		const location = body.get("location") as string;
+		const managementExperience = body.get("managementExperience") as string;
 
 		// Handle multiple file uploads
 		const relevantDocuments = Array.from(body.entries())
@@ -68,18 +69,8 @@ export async function POST(request: NextRequest) {
 			relevantDocumentsUrl = await getUrl(uploaded.cid);
 		}
 
-		// Process work history
-		const parsedWorkHistory = workHistory ? workHistory
-			.split("|")
-			.map(item => {
-				const [title = "", description = "", duration = ""] = item.split("~").map(p => p.trim());
-				return { title, description, duration };
-			})
-			.filter(item => item.title && item.description)
-			: undefined;
-
 		// Prepare metadata object with proper type conversions
-		const metadata: LaborMetadata = {
+		const metadata: ManagerMetadata = {
 			name,
 			bio,
 			...(profileImageUrl && { profileImage: profileImageUrl }),
@@ -91,10 +82,11 @@ export async function POST(request: NextRequest) {
 			...(postalCode && { postalCode }),
 			...(country && { country }),
 			...(verificationDocumentsUrl && { verificationDocuments: verificationDocumentsUrl }),
-			...(skillsets && { skillsets: skillsets.split(",").map(item => item.trim()).filter(Boolean) }),
-			...(experience && { experience: experience.split(",").map(item => item.trim()).filter(Boolean) }),
-			...(parsedWorkHistory && { workHistory: parsedWorkHistory }),
-			...(certifications && { certifications: certifications.split(",").map(item => item.trim()).filter(Boolean) }),
+			...(company && { company }),
+			...(industryFocus && { industryFocus }),
+			...(founded && { founded: parseInt(founded) }),
+			...(location && { location }),
+			...(managementExperience && { managementExperience: parseInt(managementExperience) }),
 			...(relevantDocumentsUrl && { relevantDocuments: relevantDocumentsUrl }),
 		};
 
@@ -104,8 +96,8 @@ export async function POST(request: NextRequest) {
 		// create pda for user and store onchain
 		const currentWallet = new PublicKey(walletAddress);
 
-		const [userPda] = PublicKey.findProgramAddressSync(
-			[Buffer.from("User"), currentWallet.toBuffer()],
+		const [managerPda] = PublicKey.findProgramAddressSync(
+			[Buffer.from("Manager"), currentWallet.toBuffer()],
 			program.programId
 		);
 
@@ -118,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     	const tx = new Transaction();
 
-		console.log("User PDA: ", userPda.toBase58());
+		console.log("Manager PDA: ", managerPda.toBase58());
 		console.log("System State PDA: ", systemStatePda.toBase58());
 		console.log("Metadata URL: ", metadataUrl);
 
@@ -126,12 +118,12 @@ export async function POST(request: NextRequest) {
 			.registerUser(
 				name,
 				metadataUrl,
-				{ labour: {}}
+				{ manager: {}}
 			)
 			.accounts({
 				systemState: systemStatePda,
 				// @ts-ignore
-				userAccount: userPda,
+				managerAccount: managerPda,
 				authority: currentWallet,
 				systemProgram: SystemProgram.programId,
 			})

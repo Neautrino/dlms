@@ -147,8 +147,6 @@ export async function POST(request: NextRequest) {
 		return Response.json({
 			success: true,
 			metadataUrl,
-			lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
-			blockhash: blockhashResponse.blockhash,
 			serializedTransaction: base58SerializedTx,
 			metadata
 		}, {

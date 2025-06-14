@@ -15,10 +15,6 @@ function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useAtom(currentUserAtom);
   const [registrationStatus, setRegistrationStatus] = useAtom(userRegistrationStatusAtom);
-  console.log("user", user);
-  console.log("registrationStatus", registrationStatus);
-  console.log("connected", connected);
-  console.log("publicKey", publicKey);
 
   useEffect(() => {
     const checkUserRegistration = async () => {

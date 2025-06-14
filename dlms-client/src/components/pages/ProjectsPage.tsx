@@ -177,8 +177,6 @@ export default function ProjectsListingPage() {
     return `${Math.floor(days / 365)} years ago`;
   };
 
-
-
   const formattedAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',

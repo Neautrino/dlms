@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2, User, Check, X } from 'lucide-react';
+import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2, User, Check, X, Hexagon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,10 @@ import { ApplicationStatus } from '@/types/application';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
-import { currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
+import { currentUserAtom, userRegistrationStatusAtom, allProjectsAtom } from '@/lib/atoms';
 import { useToast } from '@/hooks/use-toast';
 import { Transaction } from '@solana/web3.js';
+import axios from 'axios';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -30,6 +31,7 @@ export default function ProjectDetailsPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
   const { toast } = useToast();
+  const [allProjects, setAllProjects] = useAtom(allProjectsAtom);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -37,7 +39,17 @@ export default function ProjectDetailsPage() {
         setIsLoading(true);
         const projectId = parseInt(params.id as string);
         
-        // Fetch all projects from the API
+        // First check if the project exists in allProjects atom
+        if (allProjects.length > 0) {
+          const foundProject = allProjects.find((p: FullProjectData) => p.project.index === projectId);
+          if (foundProject) {
+            setProject(foundProject);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // If not found in atom, fetch from API
         const response = await fetch('/api/projects');
         
         if (!response.ok) {
@@ -45,6 +57,7 @@ export default function ProjectDetailsPage() {
         }
         
         const projects = await response.json();
+        setAllProjects(projects);
         
         // Find the project with the matching index
         const foundProject = projects.find((p: FullProjectData) => p.project.index === projectId);
@@ -63,18 +76,24 @@ export default function ProjectDetailsPage() {
     };
     
     fetchProjectDetails();
-  }, [params.id]);
+  }, [params.id, allProjects]);
 
   // Add new useEffect to fetch applications
   useEffect(() => {
     const fetchApplications = async () => {
+      console.log("Project", project);
+      console.log("CUrrent user", currentUser);
+      console.log("status", userRegistrationStatus.role)
       if (!project || !currentUser || userRegistrationStatus.role !== 'manager') return;
       
       try {
         setIsLoadingApplications(true);
-        const response = await fetch(`/api/projects/${project.project.index}/applications`);
-        if (!response.ok) throw new Error('Failed to fetch applications');
-        const data = await response.json();
+        const response = await axios.post(`/api/get-application-by-project`, {
+          projectPubKey: project.project.publicKey,
+        });
+        if (response.status !== 200) throw new Error('Failed to fetch applications');
+        const data = response.data;
+        console.log("Fetching applications", data);
         setApplications(data);
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -88,7 +107,7 @@ export default function ProjectDetailsPage() {
     };
 
     fetchApplications();
-  }, [project, currentUser, userRegistrationStatus.role, toast]);
+  }, [project, currentUser, userRegistrationStatus.role]);
 
   // Loading state
   if (isLoading) {
@@ -127,12 +146,12 @@ export default function ProjectDetailsPage() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
+  const formattedAmount = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(amount);
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 9,
+    }).format(amount / 1e9);
   };
 
   const formatRelativeTime = (timestamp: number) => {
@@ -244,11 +263,7 @@ export default function ProjectDetailsPage() {
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <StatusBadge status={project.project.status} />
-                  {project.metadata.companyDetails?.verifiedDocument && (
-                    <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                      Verified Company
-                    </Badge>
-                  )}
+                  
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">{project.project.title}</h1>
                 <div className="flex items-center gap-4 text-white/90">
@@ -288,9 +303,12 @@ export default function ProjectDetailsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Daily Rate</h3>
-                  <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
-                    {formatCurrency(project.project.daily_rate)}/day
-                  </p>
+                  <div className="text-purple-600 dark:text-purple-400 font-bold flex justify-center gap-2
+                       whitespace-nowrap">
+                        <Hexagon />
+                        {formattedAmount(project.project.daily_rate)} DLT
+                        /day
+                      </div>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Duration</h3>
@@ -326,13 +344,19 @@ export default function ProjectDetailsPage() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Project Documents</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <FileText size={20} className="text-purple-500" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{project.metadata.relevant_documents.description}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{project.metadata.relevant_documents.uri}</p>
+                  <a 
+                    href={project.metadata.relevant_documents.uri} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  >
+                    <FileText size={20} className="text-purple-500 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">{project.metadata.relevant_documents.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{project.metadata.relevant_documents.uri}</p>
                     </div>
-                  </div>
+                    <ArrowUpRight size={16} className="text-gray-400 flex-shrink-0" />
+                  </a>
                 </div>
               </div>
             </CardContent>
@@ -349,22 +373,21 @@ export default function ProjectDetailsPage() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Company</h3>
-                <p className="font-medium text-gray-900 dark:text-white">{project.metadata.companyDetails.name}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{project.metadata.company}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Industry Focus</h3>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Category</h3>
                 <div className="flex flex-wrap gap-2">
-                  {project.metadata.companyDetails.industryFocus.map((focus, idx) => (
-                    <Badge key={idx} className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                      {focus}
-                    </Badge>
-                  ))}
+                  <Badge className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 flex items-center gap-1.5 px-3 py-1">
+                    <Tag size={14} className="text-purple-500" />
+                    {project.metadata.category}
+                  </Badge>
                 </div>
               </div>
-              <div>
+              {/* <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Description</h3>
                 <p className="text-gray-900 dark:text-white">{project.metadata.companyDetails.description}</p>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
 
@@ -387,7 +410,7 @@ export default function ProjectDetailsPage() {
                   >
                     {project.metadata.managerWalletAddress.slice(0, 6)}...{project.metadata.managerWalletAddress.slice(-6)}
                   </button>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Rating: {project.metadata.managerRating}/5</p>
+                  {/* <p className="text-sm text-gray-500 dark:text-gray-400">Rating: {project.metadata.managerRating}/5</p> */}
                 </div>
               </div>
             </CardContent>
