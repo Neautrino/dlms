@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { userAtom } from '@/lib/atoms';
 import { MOCK_USERS } from '@/lib/DummyData';
 import { FullUserData, UserRole, UserAccount, UserMetadata, LaborMetadata } from '@/types/user';
+import { useUserData } from '@/hooks/use-user-data';
 
 interface SettingsState {
   userData: FullUserData;
@@ -68,7 +68,7 @@ const convertUserProfileToFullUserData = (profile: {
 };
 
 export default function SettingsPage() {
-  const [atomUser] = useAtom(userAtom);
+  const { user } = useUserData();
   const [useMockData, setUseMockData] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<Section>('profile');
@@ -124,14 +124,13 @@ export default function SettingsPage() {
         ...prev,
         userData: mockUser
       }));
-    } else if (atomUser) {
-      const fullUserData = convertUserProfileToFullUserData(atomUser);
+    } else if (user) {
       setSettings(prev => ({
         ...prev,
-        userData: fullUserData
+        userData: user
       }));
     }
-  }, [useMockData, atomUser]);
+  }, [useMockData, user]);
 
   const handleSave = async () => {
     setIsLoading(true);

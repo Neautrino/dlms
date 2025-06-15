@@ -8,39 +8,28 @@ export async function POST(req: Request) {
   try {
     const { projectPubkey } = await req.json();
 
-    const userPda = PublicKey.findProgramAddressSync(
-      [Buffer.from("User"), new PublicKey(projectPubkey).toBuffer()],
-      program.programId
-    )[0];
+    const publicKey = new PublicKey(projectPubkey);
 
-      const application = await program.account.application.all([
-        {
-            memcmp: {
-                offset: 8+32,
-                bytes: projectPubkey,
-            }
+    const applications = await program.account.application.all([
+      {
+        memcmp: {
+          offset: 8 + 32, // 8 for discriminator + 32 for labour pubkey
+          bytes: publicKey.toBase58(),
         }
-      ]);
+      }
+    ]);
       
-    //   // Transform the user account data
-    //   const transformedApplications: Application = {
-        
-    //     labour: user.authority,
-    //     project: user.project,
-    //     description: user.description,
-    //     status: user.status,
-    //     timestamp: user.timestamp,
     return NextResponse.json({
-      applications: application
+      applications: applications
     }, { status: 200 });
   } catch (error) {
-    console.error('Error fetching user data:', error);
-      return NextResponse.json(
+    console.error('Error fetching application data:', error);
+    return NextResponse.json(
       { 
-        error: 'Failed to fetch user data', 
+        error: 'Failed to fetch application data', 
         exists: false, 
-        message: "Failed to fetch user data", 
-        user: null 
+        message: "Failed to fetch application data", 
+        applications: [] 
       },
       { status: 500 }
     );

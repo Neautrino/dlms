@@ -15,6 +15,7 @@ export interface Project {
     duration_days: number;
     max_labourers: number;
     labour_count: number;
+    applications_count?: number;
     status: ProjectStatus;
     escrow_account: string;
     timestamp: number;

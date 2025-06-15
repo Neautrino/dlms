@@ -20,7 +20,7 @@ export async function GET() {
         rating_count: user.account.ratingCount,
         timestamp: user.account.timestamp,
         index: user.account.index,
-        role: user.account.role === 0 ? UserRole.Labour : UserRole.Manager,
+        role: 'labour' in user.account.role ? UserRole.Labour : UserRole.Manager,
         spam: user.account.spam,
       };
 

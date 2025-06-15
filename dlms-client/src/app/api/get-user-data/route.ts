@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         rating_count: user.ratingCount,
         timestamp: user.timestamp,
         index: user.index,
-        role: user.role === 0 ? UserRole.Labour : UserRole.Manager,
+        role: 'labour' in user.role ? UserRole.Labour : UserRole.Manager,
         spam: user.spam,
       };
 

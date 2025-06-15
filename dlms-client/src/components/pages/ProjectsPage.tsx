@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAtom } from 'jotai';
 import { allProjectsAtom, paginatedProjectsAtom, currentPageAtom, hasMoreProjectsAtom, currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
+import { useUserData } from '@/hooks/use-user-data';
 
 // Animation variants
 const containerVariants = {
@@ -58,7 +59,7 @@ export default function ProjectsListingPage() {
   const [currentPage, setCurrentPage] = useAtom(currentPageAtom);
   const [hasMoreProjects] = useAtom(hasMoreProjectsAtom);
   const [currentUser] = useAtom(currentUserAtom);
-  const [registrationStatus] = useAtom(userRegistrationStatusAtom);
+  const { registrationStatus} = useUserData();
 
   // Local state for filtered projects
   const [filteredProjects, setFilteredProjects] = useState<FullProjectData[]>([]);
@@ -522,7 +523,7 @@ export default function ProjectsListingPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Users size={14} className="text-purple-500" />
-                          <span>{projectData.project.labour_count}/{projectData.project.max_labourers}</span>
+                          <span>{projectData.project.applications_count || 0} applied</span>
                         </div>
                         <span className="text-gray-500 dark:text-gray-400 text-xs">
                           {formatRelativeTime(projectData.project.timestamp)}

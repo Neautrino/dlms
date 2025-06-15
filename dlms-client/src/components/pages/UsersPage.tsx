@@ -9,6 +9,7 @@ import { FullUserData, UserRole } from '@/types/user';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAtom } from 'jotai';
 import { userAtom } from '@/lib/atoms';
+import axios from 'axios';
 
 export default function UsersPage() { 
   const [users, setUsers] = useState<FullUserData[]>([]);
@@ -29,13 +30,13 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/users-state');
+      const response = await axios.get('/api/users-state');
       
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error('Failed to fetch users');
       }
       
-      const data = await response.json();
+      const data = response.data;
       setUsers(data);
       setFilteredUsers(data);
       setAtomUsers(data);

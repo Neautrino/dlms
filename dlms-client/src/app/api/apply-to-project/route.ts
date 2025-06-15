@@ -44,6 +44,40 @@ import {
         [Buffer.from("Application"), labourAccountPda.toBuffer(), projectPubKey.toBuffer()],
         program.programId
       );
+
+      // Fetch project and labour account data to validate constraints
+      const projectAccount = await program.account.project.fetch(projectPubKey);
+      const labourAccount = await program.account.userAccount.fetch(labourAccountPda);
+
+      // Validate project is open
+      if (!('open' in projectAccount.status)) {
+        return Response.json({
+          success: false,
+          error: "Project is not open for applications"
+        }, {
+          status: 400,
+        });
+      }
+
+      // Validate project is not full
+      if (projectAccount.labourCount >= projectAccount.maxLabourers) {
+        return Response.json({
+          success: false,
+          error: "Project has reached maximum number of labourers"
+        }, {
+          status: 400,
+        });
+      }
+
+      // Validate labour account is active
+      if (!labourAccount.active) {
+        return Response.json({
+          success: false,
+          error: "Labour account is not active"
+        }, {
+          status: 400,
+        });
+      }
   
       const blockhashResponse = await program.provider.connection.getLatestBlockhash();
       const tx = new Transaction();
@@ -56,13 +90,12 @@ import {
       await program.methods
         .applyToProject(description)
         .accounts({
-          // @ts-ignore
           labourAccount: labourAccountPda,
           project: projectPubKey,
           application: applicationPda,
           authority: currentWallet,
           systemProgram: SystemProgram.programId,
-        })
+        } as any)
         .instruction()
         .then(ix => tx.add(ix));
   
@@ -85,6 +118,8 @@ import {
   
       return Response.json({
         success: true,
+        lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
+        blockhash: blockhashResponse.blockhash,
         serializedTransaction: base58SerializedTx,
         application: applicationData,
         applicationPda: applicationPda.toBase58()

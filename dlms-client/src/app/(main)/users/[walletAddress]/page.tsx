@@ -121,6 +121,34 @@ export default function UserDetailsPage() {
     return `${average} (${count} reviews)`;
   };
 
+  const handleRatingSubmit = async (rating: number, review: string) => {
+    try {
+      const response = await fetch('/api/rate-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: user?.account.authority,
+          rating,
+          review,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit rating');
+      }
+
+      // Refresh user data to show updated rating
+      if (params.walletAddress) {
+        fetchUserDetails();
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -621,7 +649,7 @@ export default function UserDetailsPage() {
         isOpen={isRatingPopupOpen}
         onClose={() => setIsRatingPopupOpen(false)}
         userName={user.account.name}
-        userAddress={user.account.authority}
+        onSubmit={handleRatingSubmit}
       />
     </motion.div>
   );

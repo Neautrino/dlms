@@ -13,21 +13,21 @@ import { ApplicationStatus } from '@/types/application';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
-import { currentUserAtom, userRegistrationStatusAtom, allProjectsAtom } from '@/lib/atoms';
+import { allProjectsAtom } from '@/lib/atoms';
 import { useToast } from '@/hooks/use-toast';
 import { Transaction } from '@solana/web3.js';
 import axios from 'axios';
+import { useUserData } from '@/hooks/use-user-data';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { publicKey } = useWallet();
-  const [userRegistrationStatus] = useAtom(userRegistrationStatusAtom);
+  const { user, registrationStatus } = useUserData();
   const [project, setProject] = useState<FullProjectData | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser] = useAtom(currentUserAtom);
   const [applications, setApplications] = useState<any[]>([]);
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
   const { toast } = useToast();
@@ -50,13 +50,13 @@ export default function ProjectDetailsPage() {
         }
         
         // If not found in atom, fetch from API
-        const response = await fetch('/api/projects');
+        const response = await axios.get('/api/projects');
         
-        if (!response.ok) {
+        if(response.status !== 200) {
           throw new Error('Failed to fetch projects');
         }
         
-        const projects = await response.json();
+        const projects = await response.data;
         setAllProjects(projects);
         
         // Find the project with the matching index
@@ -82,9 +82,9 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     const fetchApplications = async () => {
       console.log("Project", project);
-      console.log("CUrrent user", currentUser);
-      console.log("status", userRegistrationStatus.role)
-      if (!project || !currentUser || userRegistrationStatus.role !== 'manager') return;
+      console.log("CUrrent user", user);
+      console.log("status", registrationStatus.role)
+      if (!project || !user || registrationStatus.role !== 'manager') return;
       
       try {
         setIsLoadingApplications(true);
@@ -107,7 +107,7 @@ export default function ProjectDetailsPage() {
     };
 
     fetchApplications();
-  }, [project, currentUser, userRegistrationStatus.role]);
+  }, [project, user, registrationStatus.role]);
 
   // Loading state
   if (isLoading) {
@@ -418,46 +418,46 @@ export default function ProjectDetailsPage() {
 
           {/* Application Status */}
           <Card>
-            <CardHeader>
+            <CardHeader>  
               <CardTitle>Application Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Hired Laborers</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Applications</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {project.project.labour_count}/{project.project.max_labourers}
+                    {project.project.applications_count || 0} applied
                   </span>
                 </div>
-                <Progress value={(project.project.labour_count / project.project.max_labourers) * 100} />
+                <Progress value={((project.project.applications_count || 0) / project.project.max_labourers) * 100} />
               </div>
-              {userRegistrationStatus.role !== 'manager' ? null : !publicKey ? (
+              {registrationStatus.role === 'manager' ? null : !publicKey ? (
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                   disabled
                 >
                   Connect Wallet to Apply
                 </Button>
-              ) : !currentUser ? (
+              ) : !user ? (
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                   disabled
                 >
                   Register to Apply
                 </Button>
-              ) : (
+              ) : registrationStatus.role === 'labour' && user.account.publicKey !== project.metadata.managerWalletAddress ? (
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                   onClick={() => setIsApplyFormOpen(true)}
                 >
                   Apply for this Project
                 </Button>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
           {/* Applications Section - Only visible to managers */}
-          {userRegistrationStatus.role === 'manager' && project && (
+          {registrationStatus.role === 'manager' && project && (
             <Card>
               <CardHeader>
                 <CardTitle>Pending Applications</CardTitle>

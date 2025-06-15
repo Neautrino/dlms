@@ -70,6 +70,16 @@ export async function GET() {
     
     // Transform the data to match our frontend type
     const transformedProjects = await Promise.all(projects.map(async (project) => {
+      // Get applications count for this project
+      const applications = await program.account.application.all([
+        {
+          memcmp: {
+            offset: 8 + 32, // 8 for discriminator + 32 for labour pubkey
+            bytes: project.publicKey.toBase58(),
+          }
+        }
+      ]);
+
       // Ensure all required fields are present with defaults
       const projectData: Project = {
         manager: project.account.manager.toString() || "",
@@ -79,6 +89,7 @@ export async function GET() {
         duration_days: project.account.durationDays || 0,
         max_labourers: project.account.maxLabourers || 0,
         labour_count: project.account.labourCount || 0,
+        applications_count: applications.length,
         status: parseAnchorStatus(project.account.status) || ProjectStatus.Open,
         escrow_account: project.account.escrowAccount.toString() || "",
         timestamp: Number(project.account.timestamp) || Date.now(),
