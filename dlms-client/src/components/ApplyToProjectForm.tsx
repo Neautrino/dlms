@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { connection } from '@/utils/program';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Loader2, Briefcase, Star, Clock, DollarSign, Info, Check, Send } from 'lucide-react';
@@ -79,14 +80,13 @@ export default function ApplyToProjectForm({ isOpen, onClose, projectPublicKey }
 
       // Deserialize and sign the transaction
       const transaction = Transaction.from(bs58.decode(data.serializedTransaction));
+      transaction.recentBlockhash = data.blockhash;
+      transaction.feePayer = publicKey;
       if (!signTransaction) {
         throw new Error('Wallet does not support transaction signing');
       }
       const signedTransaction = await signTransaction(transaction);
 
-      // Send the signed transaction
-      const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_ENDPOINT || 'https://api.devnet.solana.com';
-      const connection = new Connection(rpcEndpoint);
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
       await connection.confirmTransaction(signature);
 

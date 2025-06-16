@@ -10,6 +10,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
 import { currentUserAtom, userBalanceAtom } from '@/lib/atoms';
 import { Loader2 } from 'lucide-react';
+import { useUserData } from '@/hooks/use-user-data';
 
 interface NavigationItem {
   name: string;
@@ -38,13 +39,16 @@ const navigationItems: NavigationItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
-  const { publicKey } = useWallet();
-  const [user] = useAtom(currentUserAtom);
+  const { publicKey, isLoading: isLoadingUser } = useUserData();
   const [balance, setBalance] = useAtom(userBalanceAtom);
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
 
   useEffect(() => {
     const fetchBalance = async () => {
+      if (isLoadingUser) {
+        return;
+      }
+
       if (!publicKey) {
         setBalance(0);
         setIsLoadingBalance(false);
@@ -79,7 +83,7 @@ export default function Sidebar() {
     };
 
     fetchBalance();
-  }, [publicKey, setBalance]);
+  }, [publicKey, setBalance, isLoadingUser]);
 
   return (
     <motion.div 

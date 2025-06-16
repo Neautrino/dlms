@@ -11,18 +11,20 @@ import { Progress } from '@/components/ui/progress';
 import { FullProjectData, ProjectStatus } from '@/types/project';
 import { ApplicationStatus } from '@/types/application';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
 import { allProjectsAtom } from '@/lib/atoms';
 import { useToast } from '@/hooks/use-toast';
 import { Transaction } from '@solana/web3.js';
 import axios from 'axios';
 import { useUserData } from '@/hooks/use-user-data';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import bs58 from 'bs58';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const { user, registrationStatus } = useUserData();
   const [project, setProject] = useState<FullProjectData | null>(null);
   const [isApplyFormOpen, setIsApplyFormOpen] = useState(false);
@@ -32,6 +34,8 @@ export default function ProjectDetailsPage() {
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
   const { toast } = useToast();
   const [allProjects, setAllProjects] = useAtom(allProjectsAtom);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const { connection } = useConnection();
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -89,12 +93,13 @@ export default function ProjectDetailsPage() {
       try {
         setIsLoadingApplications(true);
         const response = await axios.post(`/api/get-application-by-project`, {
-          projectPubKey: project.project.publicKey,
+          projectPubkey: project.project.publicKey,
         });
+        console.log("Application Responce:", response );  
         if (response.status !== 200) throw new Error('Failed to fetch applications');
         const data = response.data;
         console.log("Fetching applications", data);
-        setApplications(data);
+        setApplications(data?.applications);
       } catch (error) {
         console.error('Error fetching applications:', error);
         toast('error', {
@@ -199,32 +204,40 @@ export default function ProjectDetailsPage() {
   };
 
   const handleApproveApplication = async (applicationPda: string, labourAccountPda: string) => {
-    if (!publicKey || !project) return;
+    if (!publicKey || !project || !signTransaction) return;
 
     try {
-      const response = await fetch('/api/approve-application', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress: publicKey.toString(),
-          applicationPda,
-          projectPda: project.project.publicKey,
-          labourAccountPda
-        }),
+      const response = await axios.post('/api/approve-application', {
+        walletAddress: publicKey.toString(),
+        applicationPda,
+        projectPda: project.project.publicKey,
+        labourAccountPda
       });
 
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to approve application');
       }
 
-      const { serializedTransaction } = await response.json();
+      const data = response.data;
       
       // Sign and send transaction
-      const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
-      const signedTx = await window.solana.signTransaction(transaction);
-      const signature = await window.solana.sendRawTransaction(signedTx.serialize());
+     // Deserialize and sign the transaction
+     const transaction = Transaction.from(bs58.decode(data.serializedTransaction));
+     transaction.recentBlockhash = data.blockhash;
+     transaction.lastValidBlockHeight = data.lastValidBlockHeight;
+     transaction.feePayer = publicKey;
+
+     const signedTx = await signTransaction(transaction);
+     
+     // Send the transaction
+     const signature = await connection.sendRawTransaction(signedTx.serialize());
+     
+     // Wait for confirmation
+     await connection.confirmTransaction({
+       signature,
+       blockhash: data.blockhash,
+       lastValidBlockHeight: data.lastValidBlockHeight,
+     });
       
       toast('success', {
         title: "Success",
@@ -232,9 +245,11 @@ export default function ProjectDetailsPage() {
       });
       
       // Refresh applications
-      const appsResponse = await fetch(`/api/projects/${project.project.index}/applications`);
-      const appsData = await appsResponse.json();
-      setApplications(appsData);
+      const appsResponse = await axios.post(`/api/get-application-by-project`, {
+        projectPubkey: project.project.publicKey,
+      });
+      setApplications(appsResponse.data.applications);
+      setSelectedApplication(null);
     } catch (error) {
       console.error('Error approving application:', error);
       toast('error', {
@@ -243,6 +258,128 @@ export default function ProjectDetailsPage() {
       });
     }
   };
+
+  function ApplicationDetailsDialog({ 
+    application, 
+    isOpen, 
+    onClose, 
+    onApprove 
+  }: { 
+    application: any, 
+    isOpen: boolean, 
+    onClose: () => void,
+    onApprove: (applicationPda: string, labourAccountPda: string) => void 
+  }) {
+    if (!application) return null;
+
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-4">
+            <DialogTitle className="text-3xl font-bold text-gray-900 dark:text-white">Application Details</DialogTitle>
+            <div className="h-1 w-20 bg-purple-500 rounded-full"></div>
+          </DialogHeader>
+          
+          <div className="space-y-8">
+            {/* Applicant Info Card */}
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl p-6">
+              <div className="flex items-center gap-6">
+                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg">
+                  <User size={40} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-xl text-gray-900 dark:text-white">
+                    {application.labour ? `${application.labour.slice(0, 6)}...${application.labour.slice(-6)}` : 'Unknown'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Applied {application.timestamp ? formatRelativeTime(application.timestamp) : 'Recently'}
+                  </p>
+                </div>
+                {application.status && 'pending' in application.status && (
+                  <Badge className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 px-4 py-2 text-sm">
+                    Pending Review
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Description Card */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-purple-500" />
+                  Description
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                  {application.description}
+                </p>
+              </div>
+
+              {/* Skills Card */}
+              {application.skills && application.skills.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Tag className="w-5 h-5 text-purple-500" />
+                    Skills
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {application.skills.map((skill: string, idx: number) => (
+                      <Badge 
+                        key={idx} 
+                        variant="secondary" 
+                        className="px-4 py-2 text-sm bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Experience Card */}
+              {application.experience && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-purple-500" />
+                    Experience
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {application.experience}
+                  </p>
+                </div>
+              )}
+
+              {/* Availability Card */}
+              {application.availability && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-purple-500" />
+                    Availability
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {application.availability}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Approve Button */}
+            {application.status && 'pending' in application.status && (
+              <div className="pt-6">
+                <Button
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  onClick={() => onApprove(application.publicKey, application.labour)}
+                >
+                  <Check className="w-6 h-6 mr-2" />
+                  Approve Application
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -460,7 +597,7 @@ export default function ProjectDetailsPage() {
           {registrationStatus.role === 'manager' && project && (
             <Card>
               <CardHeader>
-                <CardTitle>Pending Applications</CardTitle>
+                <CardTitle>Applications</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isLoadingApplications ? (
@@ -468,52 +605,34 @@ export default function ProjectDetailsPage() {
                     <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </div>
                 ) : applications.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No pending applications</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No applications</p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {applications.map((app) => (
-                      <div key={app.publicKey} className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="relative w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                            <User size={20} className="text-purple-800 dark:text-purple-200" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {app.labour.slice(0, 6)}...{app.labour.slice(-6)}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Applied {formatRelativeTime(app.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-300">{app.description}</p>
-                          {app.skills && app.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {app.skills.map((skill: string, idx: number) => (
-                                <Badge key={idx} variant="secondary">{skill}</Badge>
-                              ))}
+                      <div 
+                        key={app.publicKey} 
+                        className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                        onClick={() => setSelectedApplication(app)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                              <User size={20} className="text-purple-800 dark:text-purple-200" />
                             </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {app.labour ? `${app.labour.slice(0, 6)}...${app.labour.slice(-6)}` : 'Unknown'}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Applied {app.timestamp ? formatRelativeTime(app.timestamp) : 'Recently'}
+                              </p>
+                            </div>
+                          </div>
+                          {app.status && 'pending' in app.status && (
+                            <Badge className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200">
+                              Pending
+                            </Badge>
                           )}
-                        </div>
-                        <div className="mt-4 flex gap-2">
-                          <Button
-                            size="sm"
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            onClick={() => handleApproveApplication(app.publicKey, app.labour)}
-                          >
-                            <Check className="w-4 h-4 mr-2" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="flex-1"
-                            onClick={() => {/* TODO: Implement reject functionality */}}
-                          >
-                            <X className="w-4 h-4 mr-2" />
-                            Reject
-                          </Button>
                         </div>
                       </div>
                     ))}
@@ -531,6 +650,16 @@ export default function ProjectDetailsPage() {
         onClose={() => setIsApplyFormOpen(false)}
         projectPublicKey={project.project.publicKey}
       />
+
+      {/* Add the ApplicationDetailsDialog component */}
+      {project && (
+        <ApplicationDetailsDialog
+          application={selectedApplication}
+          isOpen={!!selectedApplication}
+          onClose={() => setSelectedApplication(null)}
+          onApprove={handleApproveApplication}
+        />
+      )}
     </div>
   );
 } 

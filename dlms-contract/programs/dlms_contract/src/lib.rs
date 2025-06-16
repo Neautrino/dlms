@@ -9,7 +9,7 @@ pub use error::*;
 pub use instructions::*;
 pub use states::*;
 
-declare_id!("D3EyaiLex4rCbjeiag5de5YSHmqqzL6H1DmLEsvMy4yG");
+declare_id!("LsynWjQ2r3Z7NvTrek8drVaSQvcE81iF6rzQ1j1wYfy");
 
 #[program]
 pub mod dlms_contract {

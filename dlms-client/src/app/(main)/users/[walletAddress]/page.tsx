@@ -649,7 +649,7 @@ export default function UserDetailsPage() {
         isOpen={isRatingPopupOpen}
         onClose={() => setIsRatingPopupOpen(false)}
         userName={user.account.name}
-        onSubmit={handleRatingSubmit}
+        userAddress={user.account.authority}
       />
     </motion.div>
   );

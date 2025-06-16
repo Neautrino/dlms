@@ -1,6 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { currentUserAtom, userRegistrationStatusAtom } from '@/lib/atoms';
 import { FullUserData, UserRole } from '@/types/user';
 
@@ -8,11 +8,13 @@ export function useUserData() {
   const { connected, publicKey } = useWallet();
   const [user, setUser] = useAtom(currentUserAtom);
   const [registrationStatus, setRegistrationStatus] = useAtom(userRegistrationStatusAtom);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const checkUserRegistration = async () => {
       if (!publicKey) {
         setRegistrationStatus({ isRegistered: false, role: null });
+        setIsLoading(false);
         return;
       }
 
@@ -22,10 +24,12 @@ export function useUserData() {
           isRegistered: true,
           role: user.account.role === UserRole.Labour ? 'labour' : 'manager'
         });
+        setIsLoading(false);
         return;
       }
 
       try {
+        setIsLoading(true);
         const response = await fetch('/api/get-user-data', {
           method: 'POST',
           headers: {
@@ -56,6 +60,8 @@ export function useUserData() {
           isRegistered: false,
           role: null
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -67,6 +73,6 @@ export function useUserData() {
     registrationStatus,
     isConnected: connected,
     publicKey,
-    isLoading: !user && connected && publicKey
+    isLoading
   };
 } 

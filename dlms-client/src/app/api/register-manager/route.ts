@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 		const currentWallet = new PublicKey(walletAddress);
 
 		const [managerPda] = PublicKey.findProgramAddressSync(
-			[Buffer.from("Manager"), currentWallet.toBuffer()],
+			[Buffer.from("User"), currentWallet.toBuffer()],
 			program.programId
 		);
 

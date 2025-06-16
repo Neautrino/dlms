@@ -51,7 +51,6 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
     requiredSkills: string;
     company: string;
     category: string;
-    managerWalletAddress: string;
     startDate: string;
     applicationDeadline: string;
     relevantDocsDescription: string;
@@ -68,7 +67,6 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
     requiredSkills: '',
     company: '',
     category: '',
-    managerWalletAddress: '',
     startDate: '',
     applicationDeadline: '',
     relevantDocsDescription: '',
@@ -149,6 +147,12 @@ export default function CreateProjectForm({ onClose }: { onClose: () => void }) 
 
       // Add wallet address
       formDataToSend.append('managerWalletAddress', publicKey.toString());
+
+      // Debug log to check FormData contents
+      console.log("Form fields being sent:");
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       const response = await fetch('/api/create-project', {
         method: 'POST',

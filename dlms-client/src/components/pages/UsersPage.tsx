@@ -37,6 +37,7 @@ export default function UsersPage() {
       }
       
       const data = response.data;
+      console.log("Users response: ", data);
       setUsers(data);
       setFilteredUsers(data);
       setAtomUsers(data);
@@ -99,7 +100,9 @@ export default function UsersPage() {
 
   // Format timestamp to relative time
   const formatRelativeTime = (timestamp: number) => {
-    const diff = Date.now() - timestamp;
+    // Convert timestamp from seconds to milliseconds
+    const timestampMs = timestamp * 1000;
+    const diff = Date.now() - timestampMs;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     
     if (days < 1) return 'Today';

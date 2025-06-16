@@ -37,7 +37,7 @@ import {
       const projectPublicKey = new PublicKey(projectPda);
       const labourAccountPublicKey = new PublicKey(labourAccountPda);
   
-      // Get the manager account PDA
+      // Get the manager account PDA using USER_STATE seed
       const [managerAccountPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("User"), currentWallet.toBuffer()],
         program.programId
@@ -57,7 +57,7 @@ import {
       }
   
       // Verify project is in Open status
-      if (projectAccount.status !== ProjectStatus.Open) {
+      if (!('open' in projectAccount.status)) {
         return Response.json({
           success: false,
           error: "Project is not in Open status"
@@ -76,7 +76,7 @@ import {
         });
       }
   
-      // Calculate the assignment PDA
+      // Calculate the assignment PDA using ASSIGNMENT seed
       const [assignmentPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("Assignment"), labourAccountPublicKey.toBuffer(), projectPublicKey.toBuffer()],
         program.programId
@@ -95,7 +95,7 @@ import {
       await program.methods
         .approveApplication()
         .accounts({
-          // @ts-ignore
+          // @ts-ignore - Anchor types don't match exactly but the program expects these names
           application: applicationPublicKey,
           labourAccount: labourAccountPublicKey,
           project: projectPublicKey,
@@ -118,8 +118,8 @@ import {
       // Prepare expected on-chain updated data for the response
       const laborCount = projectAccount.labourCount + 1;
       const newStatus = laborCount >= projectAccount.maxLabourers 
-        ? ProjectStatus.InProgress 
-        : ProjectStatus.Open;
+        ? { inProgress: {} } 
+        : { open: {} };
   
       const assignmentData = {
         labour: labourAccountPublicKey.toBase58(),
@@ -131,7 +131,7 @@ import {
       };
   
       const updatedApplicationData = {
-        status: ApplicationStatus.Approved,
+        status: { pending: {} },
         timestamp: Math.floor(Date.now() / 1000)
       };
   
@@ -142,6 +142,8 @@ import {
   
       return Response.json({
         success: true,
+        lastValidBlockHeight: blockhashResponse.lastValidBlockHeight,
+			  blockhash: blockhashResponse.blockhash,
         serializedTransaction: base58SerializedTx,
         assignment: assignmentData,
         assignmentPda: assignmentPda.toBase58(),

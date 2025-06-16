@@ -1,19 +1,17 @@
 import { program } from "@/utils/program";
-import { UserAccount, UserRole, FullUserData, LaborMetadata, ManagerMetadata } from "@/types/user";
 import { PublicKey } from "@solana/web3.js";
 import { NextResponse } from "next/server";
-import { Application } from "@/types/application";
 
 export async function POST(req: Request) {
   try {
-    const { projectPubkey } = await req.json();
+    const { labourPubkey } = await req.json();
 
-    const publicKey = new PublicKey(projectPubkey);
+    const publicKey = new PublicKey(labourPubkey);
 
     const applications = await program.account.application.all([
       {
         memcmp: {
-          offset: 8 + 32, // 8 for discriminator + 32 for labour pubkey
+          offset: 8, // 8 for discriminator
           bytes: publicKey.toBase58(),
         }
       }
@@ -49,4 +47,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
+} 
