@@ -70,7 +70,7 @@ const mockData = {
 };
 
 export default function AnalyticsPage() {
-  const { theme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [timeRange, setTimeRange] = useState('monthly');
   const isDarkMode = resolvedTheme === 'dark';

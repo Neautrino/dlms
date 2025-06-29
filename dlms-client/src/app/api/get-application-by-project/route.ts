@@ -1,8 +1,6 @@
 import { program } from "@/utils/program";
-import { UserAccount, UserRole, FullUserData, LaborMetadata, ManagerMetadata } from "@/types/user";
 import { PublicKey } from "@solana/web3.js";
 import { NextResponse } from "next/server";
-import { Application } from "@/types/application";
 
 export async function POST(req: Request) {
   try {

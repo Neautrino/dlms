@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { UserCheck, Star, Briefcase, CalendarClock, Tag, MessageSquare, ArrowLeft, MapPin, FileText, Code, Globe, Award, Cake, User } from 'lucide-react';
+import { UserCheck, Star, Briefcase, CalendarClock, Tag, ArrowLeft, MapPin, FileText, Code, Globe, Award, Cake, User } from 'lucide-react';
 import Image from 'next/image';
-import { FullUserData, UserRole, LaborMetadata, ManagerMetadata, getTypedUserData } from '@/types/user';
+import { FullUserData, UserRole, getTypedUserData } from '@/types/user';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAtom } from 'jotai';
 import { userAtom, currentUserAtom, allProjectsAtom } from '@/lib/atoms';
@@ -119,34 +119,6 @@ export default function UserDetailsPage() {
   const formatRating = (rating: number, count: number) => {
     const average = count > 0 ? (rating / count / 10).toFixed(1) : '0.0';
     return `${average} (${count} reviews)`;
-  };
-
-  const handleRatingSubmit = async (rating: number, review: string) => {
-    try {
-      const response = await fetch('/api/rate-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress: user?.account.authority,
-          rating,
-          review,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit rating');
-      }
-
-      // Refresh user data to show updated rating
-      if (params.walletAddress) {
-        fetchUserDetails();
-      }
-    } catch (error) {
-      console.error('Error submitting rating:', error);
-      throw error;
-    }
   };
 
   if (isLoading) {

@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Calendar, Clock, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, CheckCircle2, User, Check, X, Hexagon } from 'lucide-react';
+import { Calendar, Users, Tag, ArrowUpRight, Briefcase, MapPin, Globe, Building2, FileText, User, Check,  Hexagon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { FullProjectData, ProjectStatus } from '@/types/project';
-import { ApplicationStatus } from '@/types/application';
 import ApplyToProjectForm from '@/components/ApplyToProjectForm';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useAtom } from 'jotai';

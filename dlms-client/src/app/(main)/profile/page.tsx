@@ -5,31 +5,18 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Briefcase, CheckCircle, Clock, AlertCircle, Building, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { formatRelativeTime } from '@/utils/format';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { UserRole } from '@/types/user';
 import { useUserData } from '@/hooks/use-user-data';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import bs58  from "bs58";
 import { connection } from '@/utils/program';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
-
-interface Application {
-  publicKey: string;
-  project: string;
-  description: string;
-  skills: string[];
-  experience: string;
-  availability: string;
-  status: any;
-  timestamp: number;
-}
 
 interface WorkVerification {
   publicKey: string;
@@ -103,6 +90,7 @@ export default function ProfilePage() {
         labourPubkey: user?.account.publicKey ? new PublicKey(user.account.publicKey).toBase58() : '',
       });
 
+      console.log(response)
       setAssignments(response.data.assignments);
     } catch (error) {
       const errorMessage = error instanceof Error 

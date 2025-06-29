@@ -1,6 +1,5 @@
 'use client';
 
-import { useAtom } from 'jotai';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { MOCK_USERS } from '@/lib/DummyData';
-import { FullUserData, UserRole, UserAccount, UserMetadata, LaborMetadata } from '@/types/user';
+import { FullUserData, UserRole, LaborMetadata } from '@/types/user';
 import { useUserData } from '@/hooks/use-user-data';
 
 interface SettingsState {
@@ -32,40 +31,6 @@ interface SettingsState {
 }
 
 type Section = 'profile' | 'notifications' | 'privacy';
-
-const convertUserProfileToFullUserData = (profile: {
-  walletAddress: string;
-  name: string;
-  bio: string;
-  profileImage: string;
-  skills: string[];
-  experience: string;
-}): FullUserData => {
-  return {
-    account: {
-      publicKey: profile.walletAddress,
-      authority: profile.walletAddress,
-      name: profile.name,
-      metadata_uri: '',
-      active: true,
-      verified: false,
-      rating: 0,
-      rating_count: 0,
-      timestamp: Date.now(),
-      index: 0,
-      role: UserRole.Labour,
-      spam: false
-    },
-    metadata: {
-      name: profile.name,
-      bio: profile.bio,
-      profileImage: profile.profileImage,
-      skillsets: profile.skills,
-      experience: [profile.experience],
-      relevantDocuments: ''
-    } as LaborMetadata
-  };
-};
 
 export default function SettingsPage() {
   const { user } = useUserData();

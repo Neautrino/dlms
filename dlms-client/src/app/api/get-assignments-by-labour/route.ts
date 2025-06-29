@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connection, program } from '@/utils/program';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
+import { DLMS_PROGRAM_ID } from '@/utils/program';
 
 export async function POST(req: Request) {
   try {
@@ -26,33 +27,35 @@ export async function POST(req: Request) {
           }
     ])
 
+    console.log("Assignments: ", assignments)
+
     // Process assignments and get verification status
     const processedAssignments = await Promise.all(
       assignments.map(async (assignment) => {
-        const accountData = assignment.account.data;
+        const accountData = assignment.account;
         
         // Parse the assignment data
-        const project = new PublicKey(accountData.slice(8, 40)).toBase58();
-        const labour = new PublicKey(accountData.slice(40, 72)).toBase58();
-        const daysWorked = new BN(accountData.slice(72, 80), 'le').toNumber();
-        const daysPaid = new BN(accountData.slice(80, 88), 'le').toNumber();
-        const active = accountData[88] === 1;
-        const timestamp = new BN(accountData.slice(89, 97), 'le').toNumber();
+        const project = accountData.project.toBase58();
+        const labour = accountData.labour.toBase58();
+        const daysWorked = accountData.daysWorked;
+        const daysPaid = accountData.daysPaid;
+        const active = accountData.active;
+        const timestamp = accountData.timestamp;
 
         // Fetch work verifications for this assignment
         const verifications = await connection.getProgramAccounts(
-          new PublicKey(ASSIGNMENT_PROGRAM_ID),
+          DLMS_PROGRAM_ID,
           {
             filters: [
               {
                 memcmp: {
-                  offset: 8,
+                  offset: 8 +32,
                   bytes: project,
                 },
               },
               {
                 memcmp: {
-                  offset: 40,
+                  offset: 8,
                   bytes: labour,
                 },
               },
@@ -79,7 +82,7 @@ export async function POST(req: Request) {
         });
 
         return {
-          publicKey: assignment.pubkey.toBase58(),
+          publicKey: assignment.publicKey.toBase58(),
           project,
           labour,
           daysWorked,

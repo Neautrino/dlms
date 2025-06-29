@@ -7,9 +7,6 @@ import {
   import { NextRequest } from "next/server";
   import { program } from "@/utils/program";
   import bs58 from "bs58";
-  import { ApplicationStatus } from "@/types/application";
-  import { ProjectStatus } from "@/types/project";
-  
   export async function POST(request: NextRequest) {
     try {
       const body = await request.json();
